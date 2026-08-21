@@ -3,6 +3,9 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import 'features/inbox_page.dart' as inbox_feature;
+import 'features/games_page.dart' as games_feature;
+
 const ink = Color(0xff201c18);
 const paper = Color(0xfffffbf1);
 const yellow = Color(0xfff2b705);
@@ -98,7 +101,12 @@ class HomeShell extends StatefulWidget {
 
 class _HomeShellState extends State<HomeShell> {
   int index = 0;
-  static const pages = [FeedPage(), GamesPage(), InboxPage(), ProfilePage()];
+  static const pages = [
+    FeedPage(),
+    games_feature.GamesPage(),
+    inbox_feature.InboxPage(),
+    ProfilePage(),
+  ];
   @override
   Widget build(BuildContext context) => Scaffold(
     body: IndexedStack(index: index, children: pages),
