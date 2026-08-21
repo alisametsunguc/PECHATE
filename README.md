@@ -1,16 +1,20 @@
 # PECHATE
 
-Mobile-first social app concept built around the PECHATE “flow” identity.
+PECHATE is a Flutter social gaming prototype for Android, iOS, and Web.
 
 ## Run
 
-Open `index.html` in a modern browser. The opening animation runs automatically and reveals the Stream prototype.
+```sh
+flutter pub get
+flutter run
+```
 
-## Included
+## Included prototype flows
 
-- Tissue crumple-and-drop opening animation
-- PECHATE Stream home screen
-- Overflowing unread-message indicator
-- Fresh Drops stories
-- Interactive Drops reaction
-- Reduced-motion accessibility fallback
+- Animated tissue splash screen
+- Social stream and reactions
+- Liquid-filled inbox with 15 sample conversations
+- Chat composer, one-view photo, and flush animation
+- Chat icebreaker games
+- Ten 2–4 player party games
+- Profile screen

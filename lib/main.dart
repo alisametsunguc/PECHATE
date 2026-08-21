@@ -1,0 +1,864 @@
+import 'dart:async';
+import 'dart:math';
+
+import 'package:flutter/material.dart';
+
+const ink = Color(0xff201c18);
+const paper = Color(0xfffffbf1);
+const yellow = Color(0xfff2b705);
+const water = Color(0xff6bd7e5);
+
+void main() => runApp(const PechateApp());
+
+class PechateApp extends StatelessWidget {
+  const PechateApp({super.key});
+  @override
+  Widget build(BuildContext context) => MaterialApp(
+    debugShowCheckedModeBanner: false,
+    title: 'PECHATE',
+    theme: ThemeData(
+      useMaterial3: true,
+      scaffoldBackgroundColor: paper,
+      colorScheme: ColorScheme.fromSeed(seedColor: yellow),
+    ),
+    home: const SplashScreen(),
+  );
+}
+
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+  @override
+  State<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController controller;
+  @override
+  void initState() {
+    super.initState();
+    controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1300),
+    )..forward();
+    controller.addStatusListener((status) {
+      if (status == AnimationStatus.completed && mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const HomeShell()),
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    backgroundColor: yellow,
+    body: Center(
+      child: AnimatedBuilder(
+        animation: controller,
+        builder: (_, child) {
+          final t = controller.value;
+          return Opacity(
+            opacity: (1 - ((t - .72) / .28).clamp(0, 1)).toDouble(),
+            child: Transform.rotate(
+              angle: sin(t * 18) * .04 * t,
+              child: Transform.scale(
+                scale: 1 - .78 * Curves.easeInBack.transform(t),
+                child: child,
+              ),
+            ),
+          );
+        },
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(52),
+          child: Image.asset(
+            'assets/branding/pecete-chat-logo-v3.png',
+            width: 300,
+            height: 300,
+            fit: BoxFit.cover,
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+class HomeShell extends StatefulWidget {
+  const HomeShell({super.key});
+  @override
+  State<HomeShell> createState() => _HomeShellState();
+}
+
+class _HomeShellState extends State<HomeShell> {
+  int index = 0;
+  static const pages = [FeedPage(), GamesPage(), InboxPage(), ProfilePage()];
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    body: IndexedStack(index: index, children: pages),
+    bottomNavigationBar: NavigationBar(
+      selectedIndex: index,
+      onDestinationSelected: (value) => setState(() => index = value),
+      backgroundColor: ink,
+      indicatorColor: yellow,
+      destinations: const [
+        NavigationDestination(icon: Icon(Icons.water_drop), label: 'Stream'),
+        NavigationDestination(icon: Icon(Icons.sports_esports), label: 'Games'),
+        NavigationDestination(
+          icon: Badge(label: Text('15'), child: Icon(Icons.chat_bubble)),
+          label: 'Chat',
+        ),
+        NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
+      ],
+    ),
+  );
+}
+
+class FeedPage extends StatelessWidget {
+  const FeedPage({super.key});
+  @override
+  Widget build(BuildContext context) => SafeArea(
+    child: CustomScrollView(
+      slivers: [
+        const SliverAppBar(
+          floating: true,
+          title: Text('PECHATE', style: TextStyle(fontWeight: FontWeight.w900)),
+        ),
+        const SliverToBoxAdapter(
+          child: Padding(
+            padding: EdgeInsets.all(16),
+            child: Text(
+              'Akışta ne sızıyor?',
+              style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900),
+            ),
+          ),
+        ),
+        SliverList.builder(
+          itemCount: 5,
+          itemBuilder: (_, i) => PostCard(index: i),
+        ),
+      ],
+    ),
+  );
+}
+
+class PostCard extends StatefulWidget {
+  final int index;
+  const PostCard({super.key, required this.index});
+  @override
+  State<PostCard> createState() => _PostCardState();
+}
+
+class _PostCardState extends State<PostCard> {
+  bool reacted = false;
+  @override
+  Widget build(BuildContext context) => Card(
+    margin: const EdgeInsets.fromLTRB(14, 4, 14, 14),
+    color: Colors.white,
+    child: Column(
+      children: [
+        ListTile(
+          leading: CircleAvatar(
+            backgroundColor: widget.index.isEven ? yellow : water,
+            child: Text(widget.index.isEven ? 'M' : 'A'),
+          ),
+          title: Text(
+            widget.index.isEven ? 'Maya Lin' : 'Alex Reed',
+            style: const TextStyle(fontWeight: FontWeight.w900),
+          ),
+          subtitle: const Text('İstanbul · 3 dk'),
+        ),
+        Container(
+          height: 220,
+          margin: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: widget.index.isEven
+                  ? const [Color(0xffffd56b), Color(0xff6bcbd6)]
+                  : const [Color(0xff403b68), Color(0xffe88973)],
+            ),
+          ),
+          child: const Center(
+            child: Text(
+              'somewhere between\nhere and nowhere',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ),
+        Row(
+          children: [
+            TextButton.icon(
+              onPressed: () => setState(() => reacted = !reacted),
+              icon: Text(reacted ? '💦' : '💧'),
+              label: Text(reacted ? '249 drops' : '248 drops'),
+            ),
+            TextButton.icon(
+              onPressed: () {},
+              icon: const Icon(Icons.comment_outlined),
+              label: const Text('31'),
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
+class InboxPage extends StatelessWidget {
+  const InboxPage({super.key});
+  static const names = [
+    'Deniz',
+    'Ece',
+    'Kerem',
+    'Mina',
+    'Bora',
+    'Lara',
+    'Mert',
+    'Ada',
+    'Can',
+    'İpek',
+    'Arda',
+    'Zeynep',
+    'Emre',
+    'Duru',
+    'Alex',
+  ];
+  @override
+  Widget build(BuildContext context) => SafeArea(
+    child: Column(
+      children: [
+        Container(
+          color: yellow,
+          padding: const EdgeInsets.all(16),
+          child: const Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Mesajlar',
+                  style: TextStyle(fontSize: 27, fontWeight: FontWeight.w900),
+                ),
+              ),
+              Text('💧💧💧💧'),
+            ],
+          ),
+        ),
+        Container(
+          width: double.infinity,
+          color: ink,
+          padding: const EdgeInsets.all(10),
+          child: const Text(
+            'Gelen kutunun tuvalet molasına ihtiyacı var.',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+          ),
+        ),
+        Expanded(
+          child: ListView.builder(
+            itemCount: names.length,
+            itemBuilder: (_, i) {
+              final fill = min(1.0, (15 - i) / 4);
+              return InkWell(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => ChatPage(name: names[i])),
+                ),
+                child: Container(
+                  height: 75,
+                  margin: const EdgeInsets.fromLTRB(12, 7, 12, 0),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    gradient: LinearGradient(
+                      colors: [
+                        water.withValues(alpha: .5),
+                        water.withValues(alpha: .5),
+                        Colors.white,
+                        Colors.white,
+                      ],
+                      stops: [0, fill, fill, 1],
+                    ),
+                  ),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: i.isEven ? yellow : water,
+                      child: Text(names[i][0]),
+                    ),
+                    title: Text(
+                      names[i],
+                      style: const TextStyle(fontWeight: FontWeight.w900),
+                    ),
+                    subtitle: const Text('Yeni bir şey sızdırdı…'),
+                    trailing: Badge(label: Text('${15 - i}')),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class ChatPage extends StatefulWidget {
+  final String name;
+  const ChatPage({super.key, required this.name});
+  @override
+  State<ChatPage> createState() => _ChatPageState();
+}
+
+class _ChatPageState extends State<ChatPage> {
+  final controller = TextEditingController();
+  final messages = <String>[
+    'Bu tek gösterimlik fotoğrafı açmadan da yazabilirsin.',
+    'İddialı konuşma 😏',
+  ];
+  void send() {
+    if (controller.text.trim().isEmpty) return;
+    setState(() => messages.add(controller.text.trim()));
+    controller.clear();
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(
+      backgroundColor: yellow,
+      title: Text(
+        widget.name,
+        style: const TextStyle(fontWeight: FontWeight.w900),
+      ),
+      actions: [
+        IconButton(
+          onPressed: () => showModalBottomSheet(
+            context: context,
+            builder: (_) => const ChatGames(),
+          ),
+          icon: const Icon(Icons.sports_esports),
+        ),
+      ],
+    ),
+    body: Column(
+      children: [
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.all(14),
+            itemCount: messages.length + 1,
+            itemBuilder: (_, i) {
+              if (i == 0) {
+                return Card(
+                  color: ink,
+                  child: ListTile(
+                    onTap: () => showDialog(
+                      context: context,
+                      builder: (_) => const FlushViewer(),
+                    ),
+                    leading: const Icon(Icons.visibility, color: water),
+                    title: const Text(
+                      'Tek gösterimlik fotoğraf',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    subtitle: const Text(
+                      'Açınca girdaba gider.',
+                      style: TextStyle(color: Colors.white60),
+                    ),
+                  ),
+                );
+              }
+              return Align(
+                alignment: i > 2 ? Alignment.centerRight : Alignment.centerLeft,
+                child: Container(
+                  margin: const EdgeInsets.symmetric(vertical: 5),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: i > 2 ? yellow : Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Text(messages[i - 1]),
+                ),
+              );
+            },
+          ),
+        ),
+        SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: controller,
+                    onSubmitted: (_) => send(),
+                    decoration: InputDecoration(
+                      hintText: 'İçinde tutma…',
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                ),
+                IconButton(onPressed: send, icon: const Icon(Icons.send)),
+              ],
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class FlushViewer extends StatefulWidget {
+  const FlushViewer({super.key});
+  @override
+  State<FlushViewer> createState() => _FlushViewerState();
+}
+
+class _FlushViewerState extends State<FlushViewer>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController animation = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1600),
+  );
+  @override
+  void dispose() {
+    animation.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Dialog(
+    backgroundColor: Colors.transparent,
+    child: AnimatedBuilder(
+      animation: animation,
+      builder: (_, child) => Transform.rotate(
+        angle: animation.value * pi * 6,
+        child: Transform.scale(
+          scale: 1 - .9 * animation.value,
+          child: Opacity(opacity: 1 - animation.value, child: child),
+        ),
+      ),
+      child: Container(
+        height: 380,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(28),
+          gradient: const RadialGradient(
+            colors: [Colors.white, water, Color(0xff07526b)],
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.photo, size: 100, color: Colors.white),
+            const Text(
+              'kanıt burada',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 60),
+            FilledButton(
+              onPressed: () => animation.forward().then((_) {
+                if (context.mounted) Navigator.pop(context);
+              }),
+              child: const Text('SİFONU ÇEK'),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class ChatGames extends StatelessWidget {
+  const ChatGames({super.key});
+  @override
+  Widget build(BuildContext context) {
+    const games = [
+      'XOX',
+      'Taş Kâğıt Makas',
+      'Bu mu Şu mu',
+      'İki Doğru Bir Yalan',
+      'Aynı Cevabı Bul',
+      'Damla Soru',
+    ];
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: GridView.builder(
+          shrinkWrap: true,
+          itemCount: games.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            childAspectRatio: 1.5,
+          ),
+          itemBuilder: (_, i) => Card(
+            color: i.isEven ? yellow : water,
+            child: Center(
+              child: Text(
+                games[i],
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontWeight: FontWeight.w900),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class GameInfo {
+  final String id, name, emoji, type;
+  const GameInfo(this.id, this.name, this.emoji, this.type);
+}
+
+const partyGames = [
+  GameInfo('race', 'Sifon Sprint', '🚽', 'YARIŞ'),
+  GameInfo('catch', 'Damlayı Yakala', '💧', 'REFLEKS'),
+  GameInfo('sumo', 'Peçete Sumo', '🧻', 'ARENA'),
+  GameInfo('dodge', 'Sızıntıdan Kaç', '☔', 'KAÇIŞ'),
+  GameInfo('target', 'Pompa Patlat', '🪠', 'HEDEF'),
+  GameInfo('memory', 'Leke Hafızası', '🟨', 'HAFIZA'),
+  GameInfo('panic', 'Sakın Basma', '🚨', 'SİNİR'),
+  GameInfo('balance', 'Rulo Dengesi', '⚖️', 'DENGE'),
+  GameInfo('pong', 'Gider Pong', '🏓', 'DÜELLO'),
+  GameInfo('territory', 'Kuru Yer Kapmaca', '🧼', 'TAKTİK'),
+];
+
+class GamesPage extends StatelessWidget {
+  const GamesPage({super.key});
+  @override
+  Widget build(BuildContext context) => SafeArea(
+    child: Column(
+      children: [
+        const Padding(
+          padding: EdgeInsets.all(16),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Büyük Oyunlar',
+              style: TextStyle(fontSize: 27, fontWeight: FontWeight.w900),
+            ),
+          ),
+        ),
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 15),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: ink,
+            borderRadius: BorderRadius.circular(25),
+          ),
+          child: const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'PECHATE PARTY',
+                style: TextStyle(color: yellow, fontWeight: FontWeight.w900),
+              ),
+              Text(
+                'Tek telefon. Dört parmak. Sıfır huzur.',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 23,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              Text(
+                '2–4 kişi seç, telefonu masaya bırak.',
+                style: TextStyle(color: Colors.white60),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: GridView.builder(
+            padding: const EdgeInsets.all(15),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+            ),
+            itemCount: partyGames.length,
+            itemBuilder: (_, i) {
+              final game = partyGames[i];
+              return Card(
+                color: [
+                  const Color(0xfffff2bd),
+                  const Color(0xffdcf5f5),
+                  const Color(0xfff1e8ff),
+                ][i % 3],
+                child: InkWell(
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => PartyGamePage(game: game),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(game.emoji, style: const TextStyle(fontSize: 30)),
+                        const Spacer(),
+                        Text(
+                          game.name,
+                          style: const TextStyle(fontWeight: FontWeight.w900),
+                        ),
+                        Text(game.type, style: const TextStyle(fontSize: 8)),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class PartyGamePage extends StatefulWidget {
+  final GameInfo game;
+  const PartyGamePage({super.key, required this.game});
+  @override
+  State<PartyGamePage> createState() => _PartyGamePageState();
+}
+
+class _PartyGamePageState extends State<PartyGamePage> {
+  int players = 0;
+  List<int> scores = [];
+  bool go = false;
+  Timer? timer;
+  void start(int count) {
+    setState(() {
+      players = widget.game.id == 'pong' ? 2 : count;
+      scores = List.filled(players, 0);
+      go = widget.game.id != 'panic';
+    });
+    if (!go) {
+      timer = Timer(Duration(milliseconds: 1200 + Random().nextInt(2500)), () {
+        if (mounted) setState(() => go = true);
+      });
+    }
+  }
+
+  void tap(int i) {
+    if (!go) {
+      win('P${i + 1} erken bastı!');
+      return;
+    }
+    setState(() => scores[i]++);
+    if (scores[i] >= (widget.game.id == 'territory' ? 13 : 10)) {
+      win('P${i + 1} kazandı! Ortalık biraz ıslandı.');
+    }
+  }
+
+  void win(String text) => showDialog(
+    context: context,
+    builder: (_) => AlertDialog(
+      backgroundColor: yellow,
+      title: const Text('💦 RAUNT BİTTİ'),
+      content: Text(text),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.pop(context);
+            start(players);
+          },
+          child: const Text('TEKRAR'),
+        ),
+      ],
+    ),
+  );
+  @override
+  void dispose() {
+    timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    backgroundColor: yellow,
+    appBar: AppBar(
+      backgroundColor: yellow,
+      title: Text(
+        widget.game.name,
+        style: const TextStyle(fontWeight: FontWeight.w900),
+      ),
+    ),
+    body: players == 0 ? playerSelect() : play(),
+  );
+  Widget playerSelect() => Center(
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(widget.game.emoji, style: const TextStyle(fontSize: 80)),
+        const Text(
+          'Kaç kişisiniz?',
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 18),
+        Wrap(
+          spacing: 12,
+          children: [2, 3, 4]
+              .map(
+                (n) => FilledButton(
+                  onPressed: () => start(n),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: paper,
+                    foregroundColor: ink,
+                    fixedSize: const Size(78, 70),
+                  ),
+                  child: Text(
+                    '$n',
+                    style: const TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              )
+              .toList(),
+        ),
+      ],
+    ),
+  );
+  Widget play() => SafeArea(
+    child: Padding(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        children: [
+          Row(
+            children: List.generate(
+              players,
+              (i) => Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(3),
+                  child: Text(
+                    'P${i + 1}: ${scores[i]}',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Container(
+              width: double.infinity,
+              margin: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: paper,
+                border: Border.all(color: ink, width: 4),
+                borderRadius: BorderRadius.circular(26),
+              ),
+              child: Center(
+                child: Text(
+                  widget.game.id == 'panic'
+                      ? (go ? 'BAS!' : 'SAKIN BASMA')
+                      : widget.game.emoji,
+                  style: const TextStyle(
+                    fontSize: 70,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const Text(
+            'Tek tuş, kısa raund, bahanesi yok.',
+            style: TextStyle(fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 10),
+          GridView.count(
+            shrinkWrap: true,
+            crossAxisCount: 2,
+            childAspectRatio: 2.1,
+            children: List.generate(
+              players,
+              (i) => Padding(
+                padding: const EdgeInsets.all(4),
+                child: FilledButton(
+                  onPressed: () => tap(i),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: [
+                      const Color(0xffff6b67),
+                      water,
+                      const Color(0xff8bd669),
+                      const Color(0xffad8ced),
+                    ][i],
+                    foregroundColor: ink,
+                  ),
+                  child: Text(
+                    'P${i + 1} · BAS!',
+                    style: const TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class ProfilePage extends StatelessWidget {
+  const ProfilePage({super.key});
+  @override
+  Widget build(BuildContext context) => const SafeArea(
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        CircleAvatar(
+          radius: 55,
+          backgroundColor: yellow,
+          child: Text(
+            'S',
+            style: TextStyle(fontSize: 42, fontWeight: FontWeight.w900),
+          ),
+        ),
+        SizedBox(height: 12),
+        Text(
+          'Samet',
+          style: TextStyle(fontSize: 25, fontWeight: FontWeight.w900),
+        ),
+        Text('@alisametsunguc · İstanbul'),
+        SizedBox(height: 20),
+        Text(
+          '248 Damla  ·  15 Sızıntı  ·  42 Galibiyet',
+          style: TextStyle(fontWeight: FontWeight.w800),
+        ),
+      ],
+    ),
+  );
+}
