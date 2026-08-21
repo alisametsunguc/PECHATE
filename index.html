@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f2b705" />
+  <title>PECHATE — Let it flow.</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app" aria-label="PECHATE social app prototype">
+    <section class="home" aria-label="Home stream">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="PECHATE home"><span>P</span>PECHATE</a>
+        <div class="top-actions">
+          <button class="icon-button" aria-label="Search">⌕</button>
+          <button class="inbox-button" aria-label="4 or more unread messages">
+            <span class="inbox-liquid"></span>
+            <span class="inbox-glyph">✉</span>
+            <b>4+</b>
+          </button>
+        </div>
+      </header>
+
+      <section class="welcome">
+        <p>YOUR STREAM</p>
+        <h1>Good evening,<br><span>ready to flow?</span></h1>
+        <button class="drop-button"><span>＋</span> Drop something</button>
+      </section>
+
+      <section class="stories" aria-label="Fresh drops">
+        <article class="story new"><div>＋</div><span>Your drop</span></article>
+        <article class="story"><div class="avatar ava-one">M</div><i></i><span>Maya</span></article>
+        <article class="story"><div class="avatar ava-two">J</div><i></i><span>Jonah</span></article>
+        <article class="story"><div class="avatar ava-three">A</div><i></i><span>Alex</span></article>
+      </section>
+
+      <section class="feed-card">
+        <header>
+          <div class="avatar ava-one">M</div>
+          <div><strong>Maya Lin</strong><span>Istanbul · 3m</span></div>
+          <button aria-label="More options">•••</button>
+        </header>
+        <div class="post-art">
+          <div class="sun"></div><div class="sea"></div><div class="boat">⌁</div>
+          <p>somewhere between<br>here and nowhere</p>
+        </div>
+        <footer>
+          <button class="reaction"><span>💧</span> 248 drops</button>
+          <button>◯ 31</button><button>↗ Leak</button>
+        </footer>
+      </section>
+
+      <nav class="bottom-nav" aria-label="Main navigation">
+        <button class="active"><span>⌂</span>Stream</button>
+        <button class="games-nav"><span>🎮</span>Games</button>
+        <button class="create"><span>＋</span></button>
+        <button><span>◌</span>Chat<i></i></button>
+        <button><span>☺</span>Profile</button>
+      </nav>
+    </section>
+
+    <section class="messages-screen" aria-label="Messages" aria-hidden="true">
+      <header class="messages-header">
+        <button class="messages-back" aria-label="Back to stream">‹</button>
+        <div><p>YOUR INBOX</p><h2>Messages</h2></div>
+        <button class="new-message" aria-label="New message">＋</button>
+      </header>
+
+      <div class="drop-curtain" aria-hidden="true">
+        <div class="falling-drops"></div>
+        <b></b>
+      </div>
+
+      <div class="messages-list" tabindex="0">
+        <div class="pull-hint"><span>💧</span><b class="pull-hint-text">Pull down. Something’s leaking.</b></div>
+        <button class="message-row unread" style="--fill:100%" data-unread="4">
+          <span class="message-liquid"></span><span class="avatar ava-three">A</span>
+          <span class="message-copy"><strong>Alex Morgan</strong><small>Okay, you win. Rematch? 🎮</small></span>
+          <span class="message-meta"><time>now</time><b>4+</b></span>
+        </button>
+        <button class="message-row unread" style="--fill:75%" data-unread="3">
+          <span class="message-liquid"></span><span class="avatar ava-one">M</span>
+          <span class="message-copy"><strong>Maya Lin</strong><small>Sent you a disappearing photo</small></span>
+          <span class="message-meta"><time>2m</time><b>3</b></span>
+        </button>
+        <button class="message-row unread" style="--fill:50%" data-unread="2">
+          <span class="message-liquid"></span><span class="avatar ava-two">J</span>
+          <span class="message-copy"><strong>Jonah Reed</strong><small>That was actually hilarious</small></span>
+          <span class="message-meta"><time>8m</time><b>2</b></span>
+        </button>
+        <button class="message-row unread" style="--fill:25%" data-unread="1">
+          <span class="message-liquid"></span><span class="avatar ava-four">S</span>
+          <span class="message-copy"><strong>Sofia</strong><small>Hey! How’s your night flowing?</small></span>
+          <span class="message-meta"><time>14m</time><b>1</b></span>
+        </button>
+        <button class="message-row" style="--fill:0%">
+          <span class="message-liquid"></span><span class="avatar ava-five">K</span>
+          <span class="message-copy"><strong>Kai Wilson</strong><small>You: See you tomorrow 👋</small></span>
+          <span class="message-meta"><time>1h</time></span>
+        </button>
+        <button class="message-row" style="--fill:0%">
+          <span class="message-liquid"></span><span class="avatar ava-six">L</span>
+          <span class="message-copy"><strong>Lena Ortiz</strong><small>Reacted 💧 to your message</small></span>
+          <span class="message-meta"><time>3h</time></span>
+        </button>
+        <button class="message-row" style="--fill:0%">
+          <span class="message-liquid"></span><span class="avatar ava-seven">D</span>
+          <span class="message-copy"><strong>Deniz</strong><small>That playlist was perfect</small></span>
+          <span class="message-meta"><time>1d</time></span>
+        </button>
+        <button class="message-row" style="--fill:0%">
+          <span class="message-liquid"></span><span class="avatar ava-eight">N</span>
+          <span class="message-copy"><strong>Nora</strong><small>You: Let’s play again later</small></span>
+          <span class="message-meta"><time>2d</time></span>
+        </button>
+        <button class="message-row" style="--fill:0%">
+          <span class="message-liquid"></span><span class="avatar ava-nine">E</span>
+          <span class="message-copy"><strong>Emir</strong><small>Reacted 😂 to your photo</small></span>
+          <span class="message-meta"><time>3d</time></span>
+        </button>
+        <button class="message-row" style="--fill:0%">
+          <span class="message-liquid"></span><span class="avatar ava-ten">Z</span>
+          <span class="message-copy"><strong>Zoe Park</strong><small>You: I’ll send it tonight</small></span>
+          <span class="message-meta"><time>4d</time></span>
+        </button>
+        <button class="message-row" style="--fill:0%">
+          <span class="message-liquid"></span><span class="avatar ava-eleven">R</span>
+          <span class="message-copy"><strong>Ravi</strong><small>Good game! That was close.</small></span>
+          <span class="message-meta"><time>5d</time></span>
+        </button>
+        <button class="message-row" style="--fill:0%">
+          <span class="message-liquid"></span><span class="avatar ava-twelve">I</span>
+          <span class="message-copy"><strong>Isabella</strong><small>Shared a drop with you</small></span>
+          <span class="message-meta"><time>6d</time></span>
+        </button>
+        <button class="message-row" style="--fill:0%">
+          <span class="message-liquid"></span><span class="avatar ava-thirteen">T</span>
+          <span class="message-copy"><strong>Theo</strong><small>You: Maybe next weekend?</small></span>
+          <span class="message-meta"><time>1w</time></span>
+        </button>
+        <button class="message-row" style="--fill:0%">
+          <span class="message-liquid"></span><span class="avatar ava-fourteen">Y</span>
+          <span class="message-copy"><strong>Yuki</strong><small>Reacted 💧 to your message</small></span>
+          <span class="message-meta"><time>1w</time></span>
+        </button>
+        <button class="message-row" style="--fill:0%">
+          <span class="message-liquid"></span><span class="avatar ava-fifteen">O</span>
+          <span class="message-copy"><strong>Oscar</strong><small>See you in the next round</small></span>
+          <span class="message-meta"><time>2w</time></span>
+        </button>
+      </div>
+    </section>
+
+    <section class="chat-screen" aria-label="Chat with Alex Morgan" aria-hidden="true">
+      <header class="chat-header">
+        <button class="chat-back" aria-label="Back to messages">‹</button>
+        <span class="avatar ava-three">A</span>
+        <div class="chat-person"><strong>Alex Morgan</strong><small><i></i> şu an akışta</small></div>
+        <button class="chat-game" aria-label="Start an icebreaker game">🎮</button>
+        <button class="chat-more" aria-label="More options">•••</button>
+      </header>
+
+      <div class="chat-body">
+        <div class="chat-date">Bugün · akış başladı</div>
+        <div class="chat-line incoming"><div class="bubble">Tamam, kazandın. Rövanş? 🎮</div><time>20:41</time></div>
+        <div class="chat-line outgoing flushable"><div class="bubble">Bu kez ağlamayacağına söz verirsen olur.</div><button class="mini-flush" aria-label="Mesajı sifonla">🚽</button><time>20:42 · Görüldü</time></div>
+        <div class="chat-line incoming"><div class="bubble">Bir puanla kazanan biri için büyük sözler 😏</div><button class="drop-react" aria-label="Damla tepkisi bırak">💧</button><time>20:43</time></div>
+
+        <button class="view-once-card" type="button">
+          <span class="once-orbit"><i>1</i></span>
+          <span><strong>Tek gösterimlik fotoğraf</strong><small>Görmek için dokun · kapatınca yok olur</small></span>
+          <b>AÇ</b>
+        </button>
+
+        <div class="chat-line outgoing"><div class="bubble">Kanıtı gönderiyorum. Fazla bağlanma.</div><time>20:44</time></div>
+        <div class="typing-bubble" aria-label="Alex yazıyor"><span></span><span></span><span></span><small>Alex içinde tutuyor…</small></div>
+      </div>
+
+      <div class="quick-actions" aria-hidden="true">
+        <button data-insert="💧"><span>💧</span>Drop</button>
+        <button data-insert="Tek gösterimlik fotoğraf"><span>◉</span>Tek gösterim</button>
+        <button class="quick-game"><span>🎮</span>Buzları kır</button>
+        <button data-insert="📍"><span>📍</span>Konum</button>
+      </div>
+
+      <form class="composer">
+        <button class="composer-plus" type="button" aria-label="Open chat actions">＋</button>
+        <label><input type="text" maxlength="240" placeholder="İçinde tutma…" aria-label="Mesaj" /><span class="pressure-meter"></span></label>
+        <button class="send-drop" type="submit" aria-label="Send message">➤</button>
+      </form>
+    </section>
+
+    <div class="once-viewer" aria-hidden="true">
+      <div class="once-photo"><div class="moon"></div><div class="city"></div><p>dışarı çıktığımın kanıtı</p></div>
+      <canvas class="flush-canvas" aria-hidden="true"></canvas>
+      <div class="flush-water" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="once-progress"><span></span></div>
+      <p>Bir kez bak. Sonra sifon.</p>
+      <button type="button">Kapat ve sifonla</button>
+    </div>
+
+    <div class="game-sheet" aria-hidden="true">
+      <div class="game-card">
+        <button class="game-close" aria-label="Close game">×</button>
+        <div class="game-picker">
+          <p>SOHBET OYUNLARI</p><h3>Bir oyun daveti gönder</h3>
+          <small>Konuşma tıkandıysa biraz dürtelim.</small>
+          <div class="mini-game-grid">
+            <button data-game="xox"><span>⭕</span><strong>XOX</strong><small>Hızlı klasik</small></button>
+            <button data-game="rps"><span>✊</span><strong>Taş Kâğıt Makas</strong><small>Tek raund</small></button>
+            <button data-game="thisthat"><span>⚖️</span><strong>Bu mu, şu mu?</strong><small>Tercihini seç</small></button>
+            <button data-game="truthlie"><span>🤥</span><strong>İki doğru bir yalan</strong><small>Yalanı yakala</small></button>
+            <button data-game="same"><span>🧠</span><strong>Aynı cevabı bul</strong><small>Aynı şeyi düşün</small></button>
+            <button data-game="question"><span>💬</span><strong>Damla soru</strong><small>Sohbeti başlat</small></button>
+          </div>
+        </div>
+        <div class="game-play" hidden>
+          <button class="game-picker-back">‹ Oyunlar</button>
+          <p class="game-kicker">DAVET GÖNDERİLDİ</p>
+          <h3 class="game-title"></h3>
+          <small class="game-subtitle"></small>
+          <div class="game-stage"></div>
+        </div>
+      </div>
+    </div>
+
+    <section class="games-screen" aria-label="Games" aria-hidden="true">
+      <header class="games-header"><button class="games-back">‹</button><div><p>PECHATE PLAY</p><h2>Büyük Oyunlar</h2></div><span>🎮</span></header>
+      <div class="games-hero"><small>YAKINDA</small><h3>Arkadaşlarınla daha büyük oyna.</h3><p>Sohbet oyunları buzları kırar. Bunlar geceyi ele geçirir.</p></div>
+      <div class="big-game-list">
+        <article><div class="race-art">🏎️<i></i></div><span><strong>Mini Yarış</strong><small>4 kişi · gerçek zamanlı</small></span><b>YAKINDA</b></article>
+        <article><div class="quiz-art">🧠</div><span><strong>Trivia Arena</strong><small>Hızlı sorular · canlı skor</small></span><b>YAKINDA</b></article>
+        <article><div class="word-art">Aa</div><span><strong>Kelime Düellosu</strong><small>1v1 · 60 saniye</small></span><b>YAKINDA</b></article>
+        <article><div class="draw-art">✏️</div><span><strong>Çiz ve Sızdır</strong><small>Çiz, tahmin et, eğlen</small></span><b>YAKINDA</b></article>
+      </div>
+    </section>
+
+    <section class="splash" aria-label="PECHATE opening animation">
+      <div class="splash-glow"></div>
+      <div class="tissue-wrap">
+        <div class="tissue">
+          <img src="assets/branding/pecete-chat-logo-v3.png" alt="PECHATE tissue logo" />
+        </div>
+      </div>
+      <p class="splash-tagline">Here. You’ll need this.</p>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
