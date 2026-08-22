@@ -248,7 +248,12 @@ class LiquidPainter extends CustomPainter {
     if (fill <= 0) return;
     final top = s.height * (1 - fill), p = Path()..moveTo(0, top);
     for (double x = 0; x <= s.width; x += 4) {
-      p.lineTo(x, top + sin(x / 25 + wave * pi * 2) * 3);
+      p.lineTo(
+        x,
+        top +
+            sin(x / 22 + wave * pi * 2) * 4.5 +
+            sin(x / 47 - wave * pi * 4) * 1.8,
+      );
     }
     p
       ..lineTo(s.width, s.height)
@@ -258,8 +263,9 @@ class LiquidPainter extends CustomPainter {
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: [
-        _water.withValues(alpha: .58),
-        const Color(0xff1ba8c4).withValues(alpha: .72),
+        const Color(0xffffdd48).withValues(alpha: .72),
+        _yellow.withValues(alpha: .92),
+        const Color(0xffd99500).withValues(alpha: .92),
       ],
     ).createShader(Offset.zero & s);
     c.drawPath(p, Paint()..shader = shader);
@@ -269,7 +275,7 @@ class LiquidPainter extends CustomPainter {
         ..quadraticBezierTo(s.width * .35, top - 4, s.width * .7, top + 2)
         ..quadraticBezierTo(s.width * .9, top + 5, s.width, top),
       Paint()
-        ..color = Colors.white.withValues(alpha: .65)
+        ..color = const Color(0xfffff5b8).withValues(alpha: .92)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2,
     );
@@ -334,7 +340,11 @@ class DropsPainter extends CustomPainter {
         p,
         Paint()
           ..shader = RadialGradient(
-            colors: [Colors.white, _water, const Color(0xff087d9b)],
+            colors: [
+              const Color(0xfffff8c9),
+              const Color(0xffffd42f),
+              const Color(0xffd88c00),
+            ],
           ).createShader(Rect.fromCircle(center: Offset(x, y), radius: r * 2)),
       );
     }
