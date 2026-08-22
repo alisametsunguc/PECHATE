@@ -34,7 +34,8 @@ class _InboxPageState extends State<InboxPage> {
     'Duru',
     'Alex',
   ];
-  final unread = [8, 7, 6, 5, 4, 4, 3, 3, 2, 2, 2, 1, 1, 1, 0];
+  // Demo: yalnızca ilk üç konuşma 4+ mesaj gösterir.
+  final unread = [8, 6, 4, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 0];
   int hiddenUnread = 0;
   @override
   void initState() {
@@ -120,7 +121,7 @@ class _InboxPageState extends State<InboxPage> {
             Expanded(
               child: ListView.builder(
                 controller: scroll,
-                physics: const BouncingScrollPhysics(),
+                physics: const ClampingScrollPhysics(),
                 itemCount: people.length,
                 itemExtent: 82,
                 itemBuilder: (_, i) => LiquidMessageTile(
@@ -297,7 +298,7 @@ class _DropCurtainState extends State<DropCurtain>
     with SingleTickerProviderStateMixin {
   late final AnimationController c = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 1100),
+    duration: const Duration(milliseconds: 900),
   )..repeat();
   @override
   void dispose() {
@@ -309,12 +310,15 @@ class _DropCurtainState extends State<DropCurtain>
   Widget build(BuildContext context) => Positioned(
     left: 0,
     right: 0,
-    top: 125,
-    height: 88,
+    top: 118,
+    height: 132,
     child: AnimatedBuilder(
       animation: c,
       builder: (_, __) => CustomPaint(
-        painter: DropsPainter(progress: c.value, count: min(widget.count, 8)),
+        painter: DropsPainter(
+          progress: c.value,
+          count: min(max(2, widget.count * 2), 8),
+        ),
       ),
     ),
   );

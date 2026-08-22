@@ -109,6 +109,7 @@ class _HomeShellState extends State<HomeShell> {
   ];
   @override
   Widget build(BuildContext context) => Scaffold(
+    backgroundColor: index == 2 ? const Color(0xfff2b705) : paper,
     body: IndexedStack(index: index, children: pages),
     bottomNavigationBar: NavigationBar(
       selectedIndex: index,
