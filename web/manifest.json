@@ -1,11 +1,11 @@
 {
-    "name": "pechate",
-    "short_name": "pechate",
+    "name": "PECHATE",
+    "short_name": "PECHATE",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#f2b705",
+    "theme_color": "#f2b705",
+    "description": "PECHATE sosyal mesajlaşma ve parti oyunları uygulaması.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
