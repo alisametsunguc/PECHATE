@@ -38,3 +38,20 @@ jobs:
 
       - name: Build web app
         run: flutter build web --release
+
+      - name: Upload web build
+        uses: actions/upload-artifact@v4
+        with:
+          name: pechate-web
+          path: build/web
+          if-no-files-found: error
+
+      - name: Build Android APK
+        run: flutter build apk --release
+
+      - name: Upload Android APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: pechate-android
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
