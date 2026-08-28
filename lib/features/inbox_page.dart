@@ -141,11 +141,17 @@ class _InboxPageState extends State<InboxPage> {
             ),
           ],
         ),
-        IgnorePointer(
-          child: AnimatedOpacity(
-            duration: const Duration(milliseconds: 220),
-            opacity: hiddenUnread > 0 ? 1 : 0,
-            child: DropCurtain(count: hiddenUnread),
+        Positioned(
+          left: 0,
+          right: 0,
+          top: 118,
+          height: 132,
+          child: IgnorePointer(
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 220),
+              opacity: hiddenUnread > 0 ? 1 : 0,
+              child: DropCurtain(count: hiddenUnread),
+            ),
           ),
         ),
       ],
@@ -307,18 +313,12 @@ class _DropCurtainState extends State<DropCurtain>
   }
 
   @override
-  Widget build(BuildContext context) => Positioned(
-    left: 0,
-    right: 0,
-    top: 118,
-    height: 132,
-    child: AnimatedBuilder(
-      animation: c,
-      builder: (_, __) => CustomPaint(
-        painter: DropsPainter(
-          progress: c.value,
-          count: min(max(2, widget.count * 2), 8),
-        ),
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: c,
+    builder: (_, __) => CustomPaint(
+      painter: DropsPainter(
+        progress: c.value,
+        count: min(max(2, widget.count * 2), 8),
       ),
     ),
   );
