@@ -42,7 +42,7 @@ class _SplashScreenState extends State<SplashScreen>
     super.initState();
     controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1300),
+      duration: const Duration(milliseconds: 1850),
     )..forward();
     controller.addStatusListener((status) {
       if (status == AnimationStatus.completed && mounted) {
@@ -68,29 +68,180 @@ class _SplashScreenState extends State<SplashScreen>
         animation: controller,
         builder: (_, child) {
           final t = controller.value;
+          final crumple = Curves.easeInOutCubic.transform(
+            ((t - .08) / .72).clamp(0.0, 1.0),
+          );
+          final drop = Curves.easeInQuad.transform(
+            ((t - .72) / .28).clamp(0.0, 1.0),
+          );
+          final scaleX = 1 - crumple * .78 + sin(crumple * pi * 5) * .035;
+          final scaleY = 1 - crumple * .82 + cos(crumple * pi * 4) * .028;
           return Opacity(
-            opacity: (1 - ((t - .72) / .28).clamp(0, 1)).toDouble(),
-            child: Transform.rotate(
-              angle: sin(t * 18) * .04 * t,
-              child: Transform.scale(
-                scale: 1 - .78 * Curves.easeInBack.transform(t),
-                child: child,
+            opacity: 1 - drop,
+            child: Transform.translate(
+              offset: Offset(
+                sin(t * 13) * 5 * crumple,
+                drop * drop * 90,
+              ),
+              child: Transform.rotate(
+                angle: sin(crumple * pi * 4.5) * .055 + drop * .18,
+                child: Transform(
+                  alignment: Alignment.center,
+                  transform: Matrix4.diagonal3Values(scaleX, scaleY, 1),
+                  child: _CrumpledTissue(progress: crumple),
+                ),
               ),
             ),
           );
         },
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(52),
-          child: Image.asset(
-            'assets/branding/pecete-chat-logo-v3.png',
-            width: 300,
-            height: 300,
-            fit: BoxFit.cover,
-          ),
-        ),
       ),
     ),
   );
+}
+
+class _CrumpledTissue extends StatelessWidget {
+  final double progress;
+
+  const _CrumpledTissue({required this.progress});
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: 310,
+    height: 310,
+    child: ClipPath(
+      clipper: _OrganicTissueClipper(progress),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Transform.scale(
+            scale: 1 + progress * .38,
+            child: Image.asset(
+              'assets/branding/pecete-chat-logo-v3.png',
+              fit: BoxFit.cover,
+            ),
+          ),
+          CustomPaint(painter: _CreasePainter(progress)),
+        ],
+      ),
+    ),
+  );
+}
+
+class _OrganicTissueClipper extends CustomClipper<Path> {
+  final double progress;
+
+  const _OrganicTissueClipper(this.progress);
+
+  @override
+  Path getClip(Size size) {
+    const pointCount = 28;
+    final center = Offset(size.width / 2, size.height / 2);
+    final points = <Offset>[];
+
+    for (var i = 0; i < pointCount; i++) {
+      final angle = -pi / 2 + i * 2 * pi / pointCount;
+      final cosA = cos(angle);
+      final sinA = sin(angle);
+      final edgeRadius = min(
+        size.width * .47 / max(cosA.abs(), .001),
+        size.height * .47 / max(sinA.abs(), .001),
+      );
+      final softSquareRadius = min(edgeRadius, size.shortestSide * .61);
+      final ballRadius = size.shortestSide *
+          (.43 + sin(i * 2.17 + progress * 7) * .035);
+      final radius = softSquareRadius * (1 - progress) +
+          ballRadius * progress +
+          sin(i * 1.73 + progress * 11) * (3 + progress * 8);
+      final squeeze = 1 - progress * .12 * sin(angle * 3 + 1.1);
+      points.add(
+        center + Offset(cosA * radius * squeeze, sinA * radius),
+      );
+    }
+
+    final path = Path();
+    final firstMid = Offset(
+      (points.last.dx + points.first.dx) / 2,
+      (points.last.dy + points.first.dy) / 2,
+    );
+    path.moveTo(firstMid.dx, firstMid.dy);
+    for (var i = 0; i < points.length; i++) {
+      final current = points[i];
+      final next = points[(i + 1) % points.length];
+      final midpoint = Offset(
+        (current.dx + next.dx) / 2,
+        (current.dy + next.dy) / 2,
+      );
+      path.quadraticBezierTo(current.dx, current.dy, midpoint.dx, midpoint.dy);
+    }
+    return path..close();
+  }
+
+  @override
+  bool shouldReclip(covariant _OrganicTissueClipper oldClipper) =>
+      oldClipper.progress != progress;
+}
+
+class _CreasePainter extends CustomPainter {
+  final double progress;
+
+  const _CreasePainter(this.progress);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final reveal = Curves.easeIn.transform(progress);
+    final dark = Paint()
+      ..color = ink.withValues(alpha: .08 + reveal * .2)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2 + reveal * 1.8
+      ..strokeCap = StrokeCap.round;
+    final light = Paint()
+      ..color = Colors.white.withValues(alpha: .18 + reveal * .34)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1 + reveal * 1.5
+      ..strokeCap = StrokeCap.round;
+
+    final creases = [
+      [const Offset(.08, .22), const Offset(.36, .31), const Offset(.53, .52)],
+      [const Offset(.93, .15), const Offset(.69, .34), const Offset(.53, .52)],
+      [const Offset(.12, .82), const Offset(.34, .67), const Offset(.53, .52)],
+      [const Offset(.88, .88), const Offset(.72, .65), const Offset(.53, .52)],
+      [const Offset(.45, .02), const Offset(.42, .29), const Offset(.53, .52)],
+      [const Offset(.58, .98), const Offset(.61, .71), const Offset(.53, .52)],
+    ];
+
+    for (var i = 0; i < creases.length; i++) {
+      final line = creases[i];
+      final path = Path()
+        ..moveTo(line[0].dx * size.width, line[0].dy * size.height)
+        ..quadraticBezierTo(
+          (line[1].dx + sin(progress * 8 + i) * .035) * size.width,
+          (line[1].dy + cos(progress * 7 + i) * .025) * size.height,
+          line[2].dx * size.width,
+          line[2].dy * size.height,
+        );
+      canvas.drawPath(path, i.isEven ? dark : light);
+      canvas.drawPath(
+        path.shift(Offset(1.5 + reveal * 2, 1 + reveal)),
+        i.isEven ? light : dark,
+      );
+    }
+
+    final shade = Paint()
+      ..shader = RadialGradient(
+        center: const Alignment(-.2, -.25),
+        radius: .9,
+        colors: [
+          Colors.transparent,
+          ink.withValues(alpha: reveal * .18),
+        ],
+        stops: const [.46, 1],
+      ).createShader(Offset.zero & size);
+    canvas.drawRect(Offset.zero & size, shade);
+  }
+
+  @override
+  bool shouldRepaint(covariant _CreasePainter oldDelegate) =>
+      oldDelegate.progress != progress;
 }
 
 class HomeShell extends StatefulWidget {
