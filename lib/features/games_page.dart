@@ -16,7 +16,13 @@ class GameInfo {
 }
 
 const games = [
-  GameInfo('shooting', 'Hedef Atışı', '🎯', 'SHOOTING', '20 saniyede hedefleri vur'),
+  GameInfo(
+    'shooting',
+    'Hedef Atışı',
+    '🎯',
+    'SHOOTING',
+    '20 saniyede hedefleri vur',
+  ),
   GameInfo('puzzle', 'Kaydır', '🔢', 'ZEKA', 'Sayıları doğru sıraya diz'),
   GameInfo('reflex', 'Yeşili Bekle', '🟢', 'REFLEKS', 'Erken basmadan yakala'),
   GameInfo('odd', 'Farklı Olan', '👀', 'DİKKAT', 'Aykırı simgeyi bul'),
@@ -310,7 +316,9 @@ class _QuickGameState extends State<QuickGame> {
           ),
         ),
         Text(
-          widget.game.id == 'shooting' ? '$timeLeft sn · $score' : 'Skor $score',
+          widget.game.id == 'shooting'
+              ? '$timeLeft sn · $score'
+              : 'Skor $score',
           style: const TextStyle(color: _yellow, fontWeight: FontWeight.w900),
         ),
       ],
@@ -407,7 +415,10 @@ class _QuickGameState extends State<QuickGame> {
             child: Center(
               child: Text(
                 puzzle[i] == 0 ? '' : '${puzzle[i]}',
-                style: const TextStyle(fontSize: 34, fontWeight: FontWeight.w900),
+                style: const TextStyle(
+                  fontSize: 34,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
             ),
           ),
@@ -491,7 +502,10 @@ class _QuickGameState extends State<QuickGame> {
         backgroundColor: const Color(0xffeeeae2),
         foregroundColor: _ink,
       ),
-      child: Text(i == oddIndex ? '😎' : '🙂', style: const TextStyle(fontSize: 28)),
+      child: Text(
+        i == oddIndex ? '😎' : '🙂',
+        style: const TextStyle(fontSize: 28),
+      ),
     ),
   );
 
