@@ -16,8 +16,13 @@ class InboxPage extends StatefulWidget {
   State<InboxPage> createState() => _InboxPageState();
 }
 
-class _InboxPageState extends State<InboxPage> {
+class _InboxPageState extends State<InboxPage>
+    with SingleTickerProviderStateMixin {
   final scroll = ScrollController();
+  late final AnimationController readFlood = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1750),
+  );
   final people = [
     'Deniz',
     'Ece',
@@ -38,6 +43,7 @@ class _InboxPageState extends State<InboxPage> {
   // Demo: yalnızca ilk üç konuşma 4+ mesaj gösterir.
   final unread = [8, 6, 4, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1, 0];
   int hiddenUnread = 0;
+  bool markingAllRead = false;
   @override
   void initState() {
     super.initState();
@@ -48,6 +54,21 @@ class _InboxPageState extends State<InboxPage> {
     final hidden = (scroll.offset / 82).floor().clamp(0, people.length);
     final count = unread.take(hidden).where((n) => n > 0).length;
     if (count != hiddenUnread) setState(() => hiddenUnread = count);
+  }
+
+  Future<void> _markAllAsRead() async {
+    if (markingAllRead || unread.every((count) => count == 0)) return;
+    setState(() => markingAllRead = true);
+    await readFlood.forward(from: 0);
+    if (!mounted) return;
+    setState(() {
+      for (var i = 0; i < unread.length; i++) {
+        unread[i] = 0;
+      }
+      hiddenUnread = 0;
+      markingAllRead = false;
+    });
+    readFlood.reset();
   }
 
   String get hint {
@@ -61,6 +82,7 @@ class _InboxPageState extends State<InboxPage> {
 
   @override
   void dispose() {
+    readFlood.dispose();
     scroll.dispose();
     super.dispose();
   }
@@ -75,9 +97,9 @@ class _InboxPageState extends State<InboxPage> {
               height: 70,
               color: _yellow,
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: const Row(
+              child: Row(
                 children: [
-                  Expanded(
+                  const Expanded(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -100,7 +122,14 @@ class _InboxPageState extends State<InboxPage> {
                       ],
                     ),
                   ),
-                  Text('💧', style: TextStyle(fontSize: 27)),
+                  IconButton(
+                    onPressed:
+                        markingAllRead || unread.every((count) => count == 0)
+                        ? null
+                        : _markAllAsRead,
+                    tooltip: 'Tümünü görüldü yap',
+                    icon: const Text('💧', style: TextStyle(fontSize: 27)),
+                  ),
                 ],
               ),
             ),
@@ -155,9 +184,93 @@ class _InboxPageState extends State<InboxPage> {
             ),
           ),
         ),
+        Positioned(
+          left: 0,
+          right: 0,
+          top: 118,
+          bottom: 0,
+          child: AbsorbPointer(
+            absorbing: markingAllRead,
+            child: AnimatedBuilder(
+              animation: readFlood,
+              builder: (_, __) => CustomPaint(
+                painter: _ReadFloodPainter(readFlood.value),
+              ),
+            ),
+          ),
+        ),
       ],
     ),
   );
+}
+
+class _ReadFloodPainter extends CustomPainter {
+  final double progress;
+
+  const _ReadFloodPainter(this.progress);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (progress <= 0) return;
+    final descent = Curves.easeInOutCubic.transform(
+      (progress / .82).clamp(0.0, 1.0),
+    );
+    final fade = 1 - ((progress - .82) / .18).clamp(0.0, 1.0);
+    final waterBottom = size.height * descent;
+    final wave = Path()..moveTo(0, waterBottom);
+    for (double x = 0; x <= size.width; x += 5) {
+      wave.lineTo(
+        x,
+        waterBottom +
+            sin(x / 24 + progress * pi * 10) * 7 +
+            sin(x / 61 - progress * pi * 6) * 3,
+      );
+    }
+    wave
+      ..lineTo(size.width, 0)
+      ..lineTo(0, 0)
+      ..close();
+
+    final waterPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          const Color(0xffbaf5fb).withValues(alpha: .78 * fade),
+          _water.withValues(alpha: .9 * fade),
+          const Color(0xff179db5).withValues(alpha: .94 * fade),
+        ],
+      ).createShader(Offset.zero & size);
+    canvas.drawPath(wave, waterPaint);
+
+    final foam = Paint()
+      ..color = Colors.white.withValues(alpha: .88 * fade)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3;
+    final foamPath = Path()..moveTo(0, waterBottom);
+    for (double x = 0; x <= size.width; x += 5) {
+      foamPath.lineTo(
+        x,
+        waterBottom + sin(x / 24 + progress * pi * 10) * 7,
+      );
+    }
+    canvas.drawPath(foamPath, foam);
+
+    final bubbles = Paint()
+      ..color = Colors.white.withValues(alpha: .42 * fade)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    for (var i = 0; i < 18; i++) {
+      final x = size.width * (((i * 47) % 101) / 101);
+      final y = waterBottom * (.12 + ((i * 29) % 77) / 100);
+      final radius = 2.5 + (i % 4) * 1.6;
+      canvas.drawCircle(Offset(x, y), radius, bubbles);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ReadFloodPainter oldDelegate) =>
+      oldDelegate.progress != progress;
 }
 
 class LiquidMessageTile extends StatefulWidget {
