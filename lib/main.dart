@@ -79,10 +79,7 @@ class _SplashScreenState extends State<SplashScreen>
           return Opacity(
             opacity: 1 - drop,
             child: Transform.translate(
-              offset: Offset(
-                sin(t * 13) * 5 * crumple,
-                drop * drop * 90,
-              ),
+              offset: Offset(sin(t * 13) * 5 * crumple, drop * drop * 90),
               child: Transform.rotate(
                 angle: sin(crumple * pi * 4.5) * .055 + drop * .18,
                 child: Transform(
@@ -200,36 +197,12 @@ class _CreasePainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
 
     final creases = [
-      [
-        const Offset(.08, .22),
-        const Offset(.36, .31),
-        const Offset(.53, .52),
-      ],
-      [
-        const Offset(.93, .15),
-        const Offset(.69, .34),
-        const Offset(.53, .52),
-      ],
-      [
-        const Offset(.12, .82),
-        const Offset(.34, .67),
-        const Offset(.53, .52),
-      ],
-      [
-        const Offset(.88, .88),
-        const Offset(.72, .65),
-        const Offset(.53, .52),
-      ],
-      [
-        const Offset(.45, .02),
-        const Offset(.42, .29),
-        const Offset(.53, .52),
-      ],
-      [
-        const Offset(.58, .98),
-        const Offset(.61, .71),
-        const Offset(.53, .52),
-      ],
+      [const Offset(.08, .22), const Offset(.36, .31), const Offset(.53, .52)],
+      [const Offset(.93, .15), const Offset(.69, .34), const Offset(.53, .52)],
+      [const Offset(.12, .82), const Offset(.34, .67), const Offset(.53, .52)],
+      [const Offset(.88, .88), const Offset(.72, .65), const Offset(.53, .52)],
+      [const Offset(.45, .02), const Offset(.42, .29), const Offset(.53, .52)],
+      [const Offset(.58, .98), const Offset(.61, .71), const Offset(.53, .52)],
     ];
 
     for (var i = 0; i < creases.length; i++) {
