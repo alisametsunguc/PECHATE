@@ -144,10 +144,9 @@ class _OrganicTissueClipper extends CustomClipper<Path> {
         size.height * .47 / max(sinA.abs(), .001),
       );
       final softSquareRadius = min(edgeRadius, size.shortestSide * .61);
-      final foldedRadius = size.shortestSide *
-          (.43 * (1 - progress) +
-              .045 +
-              sin(i * 2.17 + progress * 7) * .018);
+      final foldedRadius =
+          size.shortestSide *
+          (.43 * (1 - progress) + .045 + sin(i * 2.17 + progress * 7) * .018);
       final radius =
           softSquareRadius * (1 - progress) +
           foldedRadius * progress +
