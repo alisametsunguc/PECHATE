@@ -613,12 +613,12 @@ class ChatGameSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              'Sohbette Oyna',
+              'Birbirinizi Tanıyın',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 4),
             Text(
-              'Bir oyun seç ve davet gönder.',
+              'Rekabet yok; sadece merak, sohbet ve yakınlık.',
               style: TextStyle(color: _ink.withValues(alpha: .62)),
             ),
             const SizedBox(height: 12),
@@ -678,15 +678,12 @@ class _ChatGameInfo {
 }
 
 const _chatGames = <_ChatGameInfo>[
-  _ChatGameInfo('xox', 'XOX', '⭕', 'Üçünü yan yana getir.'),
-  _ChatGameInfo('rps', 'Taş Kâğıt Makas', '✊', 'Seçimini gizli yap.'),
-  _ChatGameInfo('either', 'Bu mu Şu mu', '⚡', 'Aynı tarafı seçin.'),
-  _ChatGameInfo('lie', 'İki Doğru Bir Yalan', '🤥', 'Yalanı yakala.'),
-  _ChatGameInfo('same', 'Aynı Cevabı Bul', '🧠', 'Aynı şeyi düşünün.'),
-  _ChatGameInfo('drop', 'Damla Soru', '💧', 'Sohbeti derinleştir.'),
+  _ChatGameInfo('drop', 'Damla Soru', '💧', 'Birbirinize açılın.'),
   _ChatGameInfo('story', 'Birlikte Hikâye', '📖', 'Sırayla tek cümle yazın.'),
   _ChatGameInfo('mirror', 'Ayna', '🪞', 'Birbirinizi ne kadar okuyorsunuz?'),
   _ChatGameInfo('capsule', 'Zaman Kapsülü', '⏳', 'Geleceğe iki gizli not.'),
+  _ChatGameInfo('either', 'Bu mu Şu mu', '⚡', 'Tercihlerinizi keşfedin.'),
+  _ChatGameInfo('same', 'Aynı Cevabı Bul', '🧠', 'Ortak noktalarınızı bulun.'),
 ];
 
 enum _InviteStatus { waiting, accepted, completed }
