@@ -576,9 +576,19 @@ class ChatGameSheet extends StatelessWidget {
     const games = <_ChatGameInfo>[
       _ChatGameInfo('xox', 'XOX', '⭕', 'Üçünü yan yana getir.'),
       _ChatGameInfo('rps', 'Taş Kâğıt Makas', '✊', 'Seçimini gizli yap.'),
-      _ChatGameInfo('either', 'Bu mu Şu mu', '⚡', 'Aynı tarafı seçebilecek misiniz?'),
+      _ChatGameInfo(
+        'either',
+        'Bu mu Şu mu',
+        '⚡',
+        'Aynı tarafı seçebilecek misiniz?',
+      ),
       _ChatGameInfo('lie', 'İki Doğru Bir Yalan', '🤥', 'Yalanı yakala.'),
-      _ChatGameInfo('same', 'Aynı Cevabı Bul', '🧠', 'Aynı şeyi düşünüyor musunuz?'),
+      _ChatGameInfo(
+        'same',
+        'Aynı Cevabı Bul',
+        '🧠',
+        'Aynı şeyi düşünüyor musunuz?',
+      ),
       _ChatGameInfo('drop', 'Damla Soru', '💧', 'Sohbeti derinleştir.'),
     ];
     return SafeArea(
@@ -627,7 +637,10 @@ class ChatGameSheet extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(games[i].emoji, style: const TextStyle(fontSize: 28)),
+                        Text(
+                          games[i].emoji,
+                          style: const TextStyle(fontSize: 28),
+                        ),
                         const SizedBox(height: 5),
                         Text(
                           games[i].name,
@@ -666,10 +679,7 @@ class _ChatGameArena extends StatefulWidget {
   final _ChatGameInfo game;
   final String opponentName;
 
-  const _ChatGameArena({
-    required this.game,
-    required this.opponentName,
-  });
+  const _ChatGameArena({required this.game, required this.opponentName});
 
   @override
   State<_ChatGameArena> createState() => _ChatGameArenaState();
@@ -700,9 +710,21 @@ class _ChatGameArenaState extends State<_ChatGameArena> {
     ('Ortak süper gücümüz?', ['Işınlanma', 'Zihin okuma', 'Zaman', 'Şans']),
   ];
   static const _lieCards = [
-    ['Bir keresinde uçağı kaçırdım.', 'Gizlice şiir yazıyorum.', 'Hiç dondurma yemedim.'],
-    ['Gece yüzmeye bayılırım.', 'Bir ünlüyle karşılaştım.', 'Kahve kokusunu sevmem.'],
-    ['Çocukken evden kaçtım.', 'Üç dil konuşuyorum.', 'Yağmurda yürümeyi severim.'],
+    [
+      'Bir keresinde uçağı kaçırdım.',
+      'Gizlice şiir yazıyorum.',
+      'Hiç dondurma yemedim.',
+    ],
+    [
+      'Gece yüzmeye bayılırım.',
+      'Bir ünlüyle karşılaştım.',
+      'Kahve kokusunu sevmem.',
+    ],
+    [
+      'Çocukken evden kaçtım.',
+      'Üç dil konuşuyorum.',
+      'Yağmurda yürümeyi severim.',
+    ],
   ];
   static const _dropQuestions = [
     'Kimseye kolay kolay söylemediğin bir hayalin ne?',
@@ -789,16 +811,18 @@ class _ChatGameArenaState extends State<_ChatGameArena> {
 
   String _instruction() => switch (widget.game.id) {
     'xox' => 'Sıra $turn oyuncusunda · İlk üçlü kazanır.',
-    'rps' => stage == 0
-        ? 'Önce sen gizli seçimini yap.'
-        : stage == 1
-        ? 'Ekranı ${widget.opponentName} kişisine ver.'
-        : '${widget.opponentName}, şimdi sen seç.',
-    'either' || 'same' => stage == 0
-        ? 'Önce sen seç. Cevabın gizlenecek.'
-        : stage == 1
-        ? 'Ekranı ${widget.opponentName} kişisine ver.'
-        : '${widget.opponentName}, içinden geleni seç.',
+    'rps' =>
+      stage == 0
+          ? 'Önce sen gizli seçimini yap.'
+          : stage == 1
+          ? 'Ekranı ${widget.opponentName} kişisine ver.'
+          : '${widget.opponentName}, şimdi sen seç.',
+    'either' || 'same' =>
+      stage == 0
+          ? 'Önce sen seç. Cevabın gizlenecek.'
+          : stage == 1
+          ? 'Ekranı ${widget.opponentName} kişisine ver.'
+          : '${widget.opponentName}, içinden geleni seç.',
     'lie' => '${widget.opponentName} hakkında yalan olan cümleyi yakala.',
     _ => 'Damlayı aç. Cevaptan kaçmak yok.',
   };
@@ -852,9 +876,14 @@ class _ChatGameArenaState extends State<_ChatGameArena> {
 
   String? _winner() {
     const lines = [
-      [0, 1, 2], [3, 4, 5], [6, 7, 8],
-      [0, 3, 6], [1, 4, 7], [2, 5, 8],
-      [0, 4, 8], [2, 4, 6],
+      [0, 1, 2],
+      [3, 4, 5],
+      [6, 7, 8],
+      [0, 3, 6],
+      [1, 4, 7],
+      [2, 5, 8],
+      [0, 4, 8],
+      [2, 4, 6],
     ];
     for (final line in lines) {
       if (board[line[0]].isNotEmpty &&
