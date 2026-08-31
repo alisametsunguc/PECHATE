@@ -16,18 +16,12 @@ class GameInfo {
 }
 
 const games = [
-  GameInfo(
-    'shooting',
-    'Hedef Atışı',
-    '🎯',
-    'SHOOTING',
-    '20 saniyede hedefleri vur',
-  ),
-  GameInfo('puzzle', 'Kaydır', '🔢', 'ZEKA', 'Sayıları doğru sıraya diz'),
-  GameInfo('reflex', 'Yeşili Bekle', '🟢', 'REFLEKS', 'Erken basmadan yakala'),
-  GameInfo('odd', 'Farklı Olan', '👀', 'DİKKAT', 'Aykırı simgeyi bul'),
-  GameInfo('color', 'Renk mi Kelime mi?', '🌈', 'HIZ', 'Gördüğüne güven'),
-  GameInfo('count', 'Kaç Tane?', '⚫', 'SAYI', 'Bir bakışta say'),
+  GameInfo('shoot', 'Cep Düellosu', '🔫', '2–4 OYUNCU', 'Dönen nişanla rakibini vur'),
+  GameInfo('race', 'Turbo Dokunuş', '🏎️', '2–4 OYUNCU', 'En hızlı parmak kazanır'),
+  GameInfo('catch', 'Yıldızı Kap', '⭐', '2–4 OYUNCU', 'Doğru anda ilk sen bas'),
+  GameInfo('sumo', 'Mini Sumo', '🟠', '2–4 OYUNCU', 'Rakibini alanın dışına it'),
+  GameInfo('dodge', 'Son Platform', '🏃', '2–4 OYUNCU', 'Tehlikeli şeritten kaç'),
+  GameInfo('territory', 'Renk Kapmaca', '🟩', '2–4 OYUNCU', 'En çok kareyi ele geçir'),
 ];
 
 class GamesPage extends StatelessWidget {
@@ -65,7 +59,7 @@ class GamesPage extends StatelessWidget {
                 ),
               ),
               Text(
-                'Kısa, sade ve eğlenceli.',
+                'Aynı ekranda arkadaşlarına meydan oku.',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 23,
@@ -73,7 +67,7 @@ class GamesPage extends StatelessWidget {
                 ),
               ),
               Text(
-                '6 oyun · tek oyuncu · 30 saniyeden kısa',
+                '6 oyun · 2–4 oyuncu · tek tuş kontrolleri',
                 style: TextStyle(color: Colors.white60),
               ),
             ],
@@ -100,7 +94,7 @@ class GamesPage extends StatelessWidget {
                 child: InkWell(
                   onTap: () => Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => QuickGame(game: g)),
+                    MaterialPageRoute(builder: (_) => PartyGame(game: g)),
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(12),
@@ -651,12 +645,32 @@ class PartyGame extends StatefulWidget {
   State<PartyGame> createState() => _PartyGameState();
 }
 
+class _ArenaBullet {
+  final int owner;
+  double x;
+  double y;
+  final double dx;
+  final double dy;
+
+  _ArenaBullet({
+    required this.owner,
+    required this.x,
+    required this.y,
+    required this.dx,
+    required this.dy,
+  });
+}
+
 class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
   int players = 0;
   List<int> score = [];
   List<double> progress = [];
   List<int> lanes = [];
   List<int> territory = List.filled(25, -1);
+  List<int> lives = [];
+  List<double> tankAngles = [];
+  List<Offset> tankPositions = [];
+  List<_ArenaBullet> bullets = [];
   int target = -1, memoryStep = 0;
   List<int> sequence = [];
   bool go = false, finished = false;
@@ -677,6 +691,10 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
       progress = List.filled(players, 0);
       lanes = List.filled(players, 1);
       territory = List.filled(25, -1);
+      lives = List.filled(players, 3);
+      tankAngles = List.generate(players, (i) => i * pi);
+      tankPositions = _startingPositions(players);
+      bullets = [];
       target = -1;
       memoryStep = 0;
       sequence = [];
@@ -687,6 +705,9 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
       ballY = .5;
     });
     switch (widget.game.id) {
+      case 'shoot':
+        _startShoot();
+        break;
       case 'catch':
       case 'target':
         _spawnTarget();
@@ -709,6 +730,56 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
         _startPong();
         break;
     }
+  }
+
+  List<Offset> _startingPositions(int count) => switch (count) {
+    2 => const [Offset(.16, .5), Offset(.84, .5)],
+    3 => const [Offset(.16, .2), Offset(.84, .2), Offset(.5, .82)],
+    _ => const [
+      Offset(.16, .18),
+      Offset(.84, .18),
+      Offset(.16, .82),
+      Offset(.84, .82),
+    ],
+  };
+
+  void _startShoot() {
+    timer = Timer.periodic(const Duration(milliseconds: 30), (_) {
+      if (!mounted || finished) return;
+      for (var i = 0; i < players; i++) {
+        tankAngles[i] += i.isEven ? .035 : -.035;
+      }
+      final removed = <_ArenaBullet>[];
+      for (final bullet in bullets) {
+        bullet.x += bullet.dx;
+        bullet.y += bullet.dy;
+        if (bullet.x < 0 || bullet.x > 1 || bullet.y < 0 || bullet.y > 1) {
+          removed.add(bullet);
+          continue;
+        }
+        for (var i = 0; i < players; i++) {
+          if (i == bullet.owner || lives[i] == 0) continue;
+          if ((tankPositions[i] - Offset(bullet.x, bullet.y)).distance < .075) {
+            lives[i]--;
+            score[bullet.owner]++;
+            removed.add(bullet);
+            break;
+          }
+        }
+      }
+      bullets.removeWhere(removed.contains);
+      final alive = List.generate(players, (i) => i)
+          .where((i) => lives[i] > 0)
+          .toList();
+      if (alive.length <= 1) {
+        final winner = alive.isEmpty
+            ? score.indexOf(score.reduce(max))
+            : alive.first;
+        _win(winner, message: 'P${winner + 1} düelloyu kazandı!');
+        return;
+      }
+      setState(() {});
+    });
   }
 
   void _spawnTarget() {
@@ -782,6 +853,18 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
   void press(int i) {
     if (finished) return;
     switch (widget.game.id) {
+      case 'shoot':
+        if (lives[i] == 0) return;
+        bullets.add(
+          _ArenaBullet(
+            owner: i,
+            x: tankPositions[i].dx,
+            y: tankPositions[i].dy,
+            dx: cos(tankAngles[i]) * .018,
+            dy: sin(tankAngles[i]) * .018,
+          ),
+        );
+        break;
       case 'race':
         progress[i] += .055 + rng.nextDouble() * .025;
         score[i] = (progress[i] * 100).round();
@@ -945,7 +1028,9 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
-                    'P${i + 1}: ${score[i]}',
+                    widget.game.id == 'shoot'
+                        ? 'P${i + 1}: ${List.filled(lives[i], '♥').join()}'
+                        : 'P${i + 1}: ${score[i]}',
                     textAlign: TextAlign.center,
                     style: const TextStyle(fontWeight: FontWeight.w900),
                   ),
@@ -1001,6 +1086,54 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
     ),
   );
   Widget _field() => switch (widget.game.id) {
+    'shoot' => LayoutBuilder(
+      builder: (_, bounds) => Stack(
+        children: [
+          ...List.generate(
+            players,
+            (i) => Positioned(
+              left: tankPositions[i].dx * bounds.maxWidth - 24,
+              top: tankPositions[i].dy * bounds.maxHeight - 24,
+              child: Opacity(
+                opacity: lives[i] > 0 ? 1 : .2,
+                child: Transform.rotate(
+                  angle: tankAngles[i] + pi / 2,
+                  child: Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: [
+                        const Color(0xffff6b67),
+                        _water,
+                        const Color(0xff8bd669),
+                        const Color(0xffad8ced),
+                      ][i],
+                      shape: BoxShape.circle,
+                      border: Border.all(color: _ink, width: 3),
+                    ),
+                    child: const Icon(Icons.navigation, color: _ink),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          ...bullets.map(
+            (bullet) => Positioned(
+              left: bullet.x * bounds.maxWidth - 5,
+              top: bullet.y * bounds.maxHeight - 5,
+              child: Container(
+                width: 10,
+                height: 10,
+                decoration: const BoxDecoration(
+                  color: _ink,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
     'race' => Stack(
       children: [
         ...List.generate(
@@ -1009,7 +1142,7 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
             duration: const Duration(milliseconds: 150),
             left: 16 + progress[i] * 240,
             top: 38 + i * 61,
-            child: Text('${i + 1}🚽', style: const TextStyle(fontSize: 27)),
+            child: Text('${i + 1}🏎️', style: const TextStyle(fontSize: 27)),
           ),
         ),
         const Positioned(
@@ -1060,7 +1193,7 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
             duration: const Duration(milliseconds: 180),
             left: 70 + (i % 2) * 130 + progress[i] * 30,
             top: 70 + (i ~/ 2) * 125 + progress[i] * 35,
-            child: Text('${i + 1}🧻', style: const TextStyle(fontSize: 31)),
+            child: Text('${i + 1}🟠', style: const TextStyle(fontSize: 31)),
           ),
         ),
       ],
@@ -1089,7 +1222,7 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
           Positioned(
             right: 20,
             top: 30 + target * 105,
-            child: const Text('💧💧', style: TextStyle(fontSize: 27)),
+            child: const Text('⚠️⚠️', style: TextStyle(fontSize: 27)),
           ),
       ],
     ),
@@ -1200,6 +1333,7 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
     ),
   };
   String _button() => switch (widget.game.id) {
+    'shoot' => 'ATEŞ',
     'race' => 'BAS!',
     'catch' => 'YAKALA',
     'sumo' => 'İT!',
@@ -1212,16 +1346,17 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
     _ => 'KAP!',
   };
   String _hint() => switch (widget.game.id) {
-    'race' => 'Sifonu en hızlı kim çekecek?',
-    'catch' => 'Damla görününce ilk sen yakala.',
-    'sumo' => 'Rakibini ringden peçete gibi uçur.',
-    'dodge' => 'Parlayan şeritten kaç, kuru kal.',
+    'shoot' => 'Nişan dönerken ateş et. Son hayatta kalan kazanır.',
+    'race' => 'Bitiş çizgisine ulaşmak için hızlı dokun.',
+    'catch' => 'Yıldız görününce ilk sen yakala.',
+    'sumo' => 'Rakibini çemberin dışına it.',
+    'dodge' => 'Tehlikeli şeritten kaç ve platformda kal.',
     'target' => 'Pompa çıkınca ilk sen bas.',
     'memory' => 'Lekelerin sırasını hatırla.',
     'panic' => 'Yeşil olmadan sakın basma.',
     'balance' => 'Sol oyuncular sola, sağ oyuncular sağa.',
     'pong' => 'Tek tuşla raketini döndür, gideri koru.',
-    'territory' => 'Her basış bir kuru kare. En çok alanı kap.',
+    'territory' => 'Her basış bir kare. En çok alanı kap.',
     _ => '',
   };
 }
