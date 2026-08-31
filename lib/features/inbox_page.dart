@@ -367,6 +367,8 @@ class ChatPage extends StatefulWidget {
 
 class _ChatPageState extends State<ChatPage> {
   final input = TextEditingController();
+  Timer? invitationTimer;
+  _ChatGameInvite? invitation;
   final messages = <String>[
     'Bu fotoğrafı açmadan da yazabiliyorsun.',
     'İddialı konuşma 😏',
@@ -380,18 +382,46 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<void> openGames() async {
-    final result = await showModalBottomSheet<String>(
+    final gameId = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
-      builder: (_) => ChatGameSheet(opponentName: widget.name),
+      builder: (_) => const ChatGameSheet(),
+    );
+    if (gameId == null || !mounted) return;
+    final game = _chatGames.firstWhere((item) => item.id == gameId);
+    setState(() => invitation = _ChatGameInvite(game));
+    invitationTimer?.cancel();
+    invitationTimer = Timer(const Duration(milliseconds: 1400), () {
+      if (!mounted || invitation?.game.id != game.id) return;
+      setState(() => invitation!.status = _InviteStatus.accepted);
+    });
+  }
+
+  Future<void> startAcceptedGame() async {
+    final activeInvite = invitation;
+    if (activeInvite == null || activeInvite.status != _InviteStatus.accepted) {
+      return;
+    }
+    final result = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => _ChatGameArena(
+          game: activeInvite.game,
+          opponentName: widget.name,
+        ),
+      ),
     );
     if (result != null && mounted) {
-      setState(() => messages.add('🎮 $result'));
+      setState(() {
+        messages.add('🎮 $result');
+        invitation!.status = _InviteStatus.completed;
+      });
     }
   }
 
   @override
   void dispose() {
+    invitationTimer?.cancel();
     input.dispose();
     super.dispose();
   }
@@ -463,6 +493,12 @@ class _ChatPageState extends State<ChatPage> {
                   ),
                 ),
               ),
+              if (invitation != null)
+                _GameInviteCard(
+                  invite: invitation!,
+                  opponentName: widget.name,
+                  onStart: startAcceptedGame,
+                ),
             ],
           ),
         ),
@@ -567,30 +603,10 @@ class _FlushViewerState extends State<FlushViewer>
 }
 
 class ChatGameSheet extends StatelessWidget {
-  final String opponentName;
-
-  const ChatGameSheet({super.key, required this.opponentName});
+  const ChatGameSheet({super.key});
 
   @override
   Widget build(BuildContext context) {
-    const games = <_ChatGameInfo>[
-      _ChatGameInfo('xox', 'XOX', '⭕', 'Üçünü yan yana getir.'),
-      _ChatGameInfo('rps', 'Taş Kâğıt Makas', '✊', 'Seçimini gizli yap.'),
-      _ChatGameInfo(
-        'either',
-        'Bu mu Şu mu',
-        '⚡',
-        'Aynı tarafı seçebilecek misiniz?',
-      ),
-      _ChatGameInfo('lie', 'İki Doğru Bir Yalan', '🤥', 'Yalanı yakala.'),
-      _ChatGameInfo(
-        'same',
-        'Aynı Cevabı Bul',
-        '🧠',
-        'Aynı şeyi düşünüyor musunuz?',
-      ),
-      _ChatGameInfo('drop', 'Damla Soru', '💧', 'Sohbeti derinleştir.'),
-    ];
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(18),
@@ -603,13 +619,13 @@ class ChatGameSheet extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Telefonu sırayla birbirinize verin.',
+              'Bir oyun seç ve davet gönder.',
               style: TextStyle(color: _ink.withValues(alpha: .62)),
             ),
             const SizedBox(height: 12),
             GridView.builder(
               shrinkWrap: true,
-              itemCount: games.length,
+              itemCount: _chatGames.length,
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
                 childAspectRatio: 1.5,
@@ -618,37 +634,24 @@ class ChatGameSheet extends StatelessWidget {
                 color: i.isEven ? _yellow : _water,
                 child: InkWell(
                   borderRadius: BorderRadius.circular(12),
-                  onTap: () async {
-                    final result = await Navigator.push<String>(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => _ChatGameArena(
-                          game: games[i],
-                          opponentName: opponentName,
-                        ),
-                      ),
-                    );
-                    if (result != null && context.mounted) {
-                      Navigator.pop(context, result);
-                    }
-                  },
+                  onTap: () => Navigator.pop(context, _chatGames[i].id),
                   child: Padding(
                     padding: const EdgeInsets.all(10),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          games[i].emoji,
+                          _chatGames[i].emoji,
                           style: const TextStyle(fontSize: 28),
                         ),
                         const SizedBox(height: 5),
                         Text(
-                          games[i].name,
+                          _chatGames[i].name,
                           textAlign: TextAlign.center,
                           style: const TextStyle(fontWeight: FontWeight.w900),
                         ),
                         Text(
-                          games[i].description,
+                          _chatGames[i].description,
                           textAlign: TextAlign.center,
                           maxLines: 2,
                           style: const TextStyle(fontSize: 11),
@@ -675,6 +678,95 @@ class _ChatGameInfo {
   const _ChatGameInfo(this.id, this.name, this.emoji, this.description);
 }
 
+const _chatGames = <_ChatGameInfo>[
+  _ChatGameInfo('xox', 'XOX', '⭕', 'Üçünü yan yana getir.'),
+  _ChatGameInfo('rps', 'Taş Kâğıt Makas', '✊', 'Seçimini gizli yap.'),
+  _ChatGameInfo('either', 'Bu mu Şu mu', '⚡', 'Aynı tarafı seçin.'),
+  _ChatGameInfo('lie', 'İki Doğru Bir Yalan', '🤥', 'Yalanı yakala.'),
+  _ChatGameInfo('same', 'Aynı Cevabı Bul', '🧠', 'Aynı şeyi düşünün.'),
+  _ChatGameInfo('drop', 'Damla Soru', '💧', 'Sohbeti derinleştir.'),
+  _ChatGameInfo('story', 'Birlikte Hikâye', '📖', 'Sırayla tek cümle yazın.'),
+  _ChatGameInfo('mirror', 'Ayna', '🪞', 'Birbirinizi ne kadar okuyorsunuz?'),
+  _ChatGameInfo('capsule', 'Zaman Kapsülü', '⏳', 'Geleceğe iki gizli not.'),
+];
+
+enum _InviteStatus { waiting, accepted, completed }
+
+class _ChatGameInvite {
+  final _ChatGameInfo game;
+  _InviteStatus status = _InviteStatus.waiting;
+
+  _ChatGameInvite(this.game);
+}
+
+class _GameInviteCard extends StatelessWidget {
+  final _ChatGameInvite invite;
+  final String opponentName;
+  final VoidCallback onStart;
+
+  const _GameInviteCard({
+    required this.invite,
+    required this.opponentName,
+    required this.onStart,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final accepted = invite.status == _InviteStatus.accepted;
+    final completed = invite.status == _InviteStatus.completed;
+    return Container(
+      margin: const EdgeInsets.only(top: 12, left: 30),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: accepted ? _water : Colors.white,
+        border: Border.all(color: _ink, width: 2),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(22),
+          topRight: Radius.circular(22),
+          bottomLeft: Radius.circular(22),
+          bottomRight: Radius.circular(5),
+        ),
+      ),
+      child: Row(
+        children: [
+          Text(invite.game.emoji, style: const TextStyle(fontSize: 38)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  invite.game.name,
+                  style: const TextStyle(fontWeight: FontWeight.w900),
+                ),
+                Text(
+                  completed
+                      ? 'Oyun tamamlandı.'
+                      : accepted
+                      ? '$opponentName daveti kabul etti.'
+                      : '$opponentName yanıtlıyor…',
+                ),
+              ],
+            ),
+          ),
+          if (accepted)
+            FilledButton(
+              onPressed: onStart,
+              style: FilledButton.styleFrom(backgroundColor: _ink),
+              child: const Text('OYNA'),
+            )
+          else if (!completed)
+            const SizedBox(
+              width: 22,
+              height: 22,
+              child: CircularProgressIndicator(strokeWidth: 3),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _ChatGameArena extends StatefulWidget {
   final _ChatGameInfo game;
   final String opponentName;
@@ -688,10 +780,14 @@ class _ChatGameArena extends StatefulWidget {
 class _ChatGameArenaState extends State<_ChatGameArena> {
   final rng = Random();
   final board = List<String>.filled(9, '');
+  final gameInput = TextEditingController();
+  final storyLines = <String>[];
   String turn = 'X';
   String? firstChoice;
+  String? capsuleNote;
   String? result;
   int stage = 0;
+  int storyTurn = 0;
   late final int promptIndex;
   late final int lieIndex;
   late final int questionIndex;
@@ -734,6 +830,18 @@ class _ChatGameArenaState extends State<_ChatGameArena> {
     'İkimizin hikâyesine bir isim versen ne olurdu?',
     'Beni tek bir şarkıyla anlatman gerekse hangisi olurdu?',
   ];
+  static const _storyStarters = [
+    'Şehrin bütün ışıkları söndüğünde yalnızca ikimizin telefonu çaldı.',
+    'Masadaki sarı peçetenin altında yarına ait bir not vardı.',
+    'Tren son durağı geçti ama ikimiz de inmeyi düşünmedik.',
+    'Yağmur başladığında gökyüzünden su yerine küçük mektuplar düştü.',
+  ];
+  static const _mirrorPrompts = [
+    ('Diğerinin en çok ihtiyaç duyduğu şey?', ['Dinlenmek', 'Anlaşılmak', 'Cesaret', 'Kahkaha']),
+    ('Zor bir günde ona nasıl yaklaşmalı?', ['Sarıl', 'Dinle', 'Alan ver', 'Güldür']),
+    ('İlişkinizin gizli gücü?', ['Güven', 'Merak', 'Sabır', 'Tutku']),
+    ('Söylemeden anladığınız şey?', ['Özlemek', 'Kırılmak', 'Heyecan', 'Yorgunluk']),
+  ];
 
   @override
   void initState() {
@@ -741,6 +849,13 @@ class _ChatGameArenaState extends State<_ChatGameArena> {
     promptIndex = rng.nextInt(_eitherPrompts.length);
     lieIndex = rng.nextInt(3);
     questionIndex = rng.nextInt(_dropQuestions.length);
+    storyLines.add(_storyStarters[rng.nextInt(_storyStarters.length)]);
+  }
+
+  @override
+  void dispose() {
+    gameInput.dispose();
+    super.dispose();
   }
 
   void finish(String value) => setState(() => result = value);
@@ -802,7 +917,12 @@ class _ChatGameArenaState extends State<_ChatGameArena> {
             'same' => _secretChoices(
               _samePrompts[promptIndex % _samePrompts.length].$2,
             ),
-            _ => _drop(),
+            'drop' => _drop(),
+            'story' => _story(),
+            'mirror' => _secretChoices(
+              _mirrorPrompts[promptIndex % _mirrorPrompts.length].$2,
+            ),
+            _ => _capsule(),
           },
         ),
       ),
@@ -824,7 +944,19 @@ class _ChatGameArenaState extends State<_ChatGameArena> {
           ? 'Ekranı ${widget.opponentName} kişisine ver.'
           : '${widget.opponentName}, içinden geleni seç.',
     'lie' => '${widget.opponentName} hakkında yalan olan cümleyi yakala.',
-    _ => 'Damlayı aç. Cevaptan kaçmak yok.',
+    'drop' => 'Damlayı aç. Cevaptan kaçmak yok.',
+    'story' =>
+      'Sıra ${storyTurn.isEven ? 'sende' : widget.opponentName}. Yalnızca bir cümle ekle.',
+    'mirror' => stage == 0
+        ? '${widget.opponentName} ne derdi? Gizli seç.'
+        : stage == 1
+        ? 'Ekranı ${widget.opponentName} kişisine ver.'
+        : '${widget.opponentName}, kendi cevabını seç.',
+    _ => stage == 0
+        ? 'Geleceğe bir not bırak. Notun gizlenecek.'
+        : stage == 1
+        ? 'Kapsülü ${widget.opponentName} kişisine ver.'
+        : '${widget.opponentName}, sen de bir not bırak.',
   };
 
   Widget _xox() => Center(
@@ -912,9 +1044,11 @@ class _ChatGameArenaState extends State<_ChatGameArena> {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        if (widget.game.id == 'same') ...[
+        if (widget.game.id == 'same' || widget.game.id == 'mirror') ...[
           Text(
-            _samePrompts[promptIndex % _samePrompts.length].$1,
+            widget.game.id == 'mirror'
+                ? _mirrorPrompts[promptIndex % _mirrorPrompts.length].$1
+                : _samePrompts[promptIndex % _samePrompts.length].$1,
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
           ),
@@ -1038,6 +1172,136 @@ class _ChatGameArenaState extends State<_ChatGameArena> {
       ),
     ),
   );
+
+  Widget _story() => Column(
+    children: [
+      Expanded(
+        child: ListView.builder(
+          itemCount: storyLines.length,
+          itemBuilder: (_, i) => Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: i == 0
+                  ? _ink
+                  : i.isEven
+                  ? _water
+                  : _yellow,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Text(
+              storyLines[i],
+              style: TextStyle(
+                color: i == 0 ? Colors.white : _ink,
+                fontWeight: i == 0 ? FontWeight.w900 : FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      ),
+      const SizedBox(height: 10),
+      TextField(
+        controller: gameInput,
+        maxLength: 140,
+        maxLines: 2,
+        decoration: InputDecoration(
+          hintText: 'Hikâyeye tek cümle ekle…',
+          filled: true,
+          fillColor: Colors.white,
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(18)),
+        ),
+      ),
+      FilledButton.icon(
+        onPressed: _addStorySentence,
+        style: FilledButton.styleFrom(
+          backgroundColor: _ink,
+          minimumSize: const Size.fromHeight(52),
+        ),
+        icon: const Icon(Icons.auto_stories),
+        label: const Text('TEK CÜMLEYİ EKLE'),
+      ),
+    ],
+  );
+
+  void _addStorySentence() {
+    var sentence = gameInput.text.trim().replaceAll('\n', ' ');
+    if (sentence.isEmpty) return;
+    final punctuation = RegExp(r'[.!?]').allMatches(sentence).length;
+    if (punctuation > 1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Her turda yalnızca bir cümle yazabilirsin.')),
+      );
+      return;
+    }
+    if (!RegExp(r'[.!?]$').hasMatch(sentence)) sentence = '$sentence.';
+    final author = storyTurn.isEven ? 'Sen' : widget.opponentName;
+    setState(() {
+      storyLines.add('$author: $sentence');
+      storyTurn++;
+      gameInput.clear();
+      if (storyTurn == 6) {
+        result = 'Birlikte Hikâye tamamlandı:\n${storyLines.join(' ')}';
+      }
+    });
+  }
+
+  Widget _capsule() {
+    if (stage == 1) {
+      return Center(
+        child: FilledButton.icon(
+          onPressed: () => setState(() => stage = 2),
+          style: FilledButton.styleFrom(
+            backgroundColor: _ink,
+            minimumSize: const Size(235, 74),
+          ),
+          icon: const Icon(Icons.lock),
+          label: Text('${widget.opponentName} HAZIR'),
+        ),
+      );
+    }
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text('⏳', style: TextStyle(fontSize: 72)),
+        const SizedBox(height: 12),
+        TextField(
+          controller: gameInput,
+          maxLength: 120,
+          maxLines: 3,
+          decoration: InputDecoration(
+            hintText: stage == 0
+                ? 'Bir yıl sonraki ikinize not…'
+                : 'Senin gelecek notun…',
+            filled: true,
+            fillColor: Colors.white,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(18)),
+          ),
+        ),
+        FilledButton.icon(
+          onPressed: _sealCapsule,
+          style: FilledButton.styleFrom(backgroundColor: _ink),
+          icon: const Icon(Icons.lock_outline),
+          label: const Text('NOTU MÜHÜRLE'),
+        ),
+      ],
+    );
+  }
+
+  void _sealCapsule() {
+    final note = gameInput.text.trim();
+    if (note.isEmpty) return;
+    if (stage == 0) {
+      setState(() {
+        capsuleNote = note;
+        gameInput.clear();
+        stage = 1;
+      });
+    } else {
+      finish(
+        'Zaman Kapsülü mühürlendi ⏳\nSen: “$capsuleNote”\n${widget.opponentName}: “$note”',
+      );
+    }
+  }
 
   Widget _resultCard() => Center(
     child: Container(
