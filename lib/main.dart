@@ -147,15 +147,14 @@ class _OrganicTissueClipper extends CustomClipper<Path> {
         size.height * .47 / max(sinA.abs(), .001),
       );
       final softSquareRadius = min(edgeRadius, size.shortestSide * .61);
-      final ballRadius = size.shortestSide *
-          (.43 + sin(i * 2.17 + progress * 7) * .035);
-      final radius = softSquareRadius * (1 - progress) +
+      final ballRadius =
+          size.shortestSide * (.43 + sin(i * 2.17 + progress * 7) * .035);
+      final radius =
+          softSquareRadius * (1 - progress) +
           ballRadius * progress +
           sin(i * 1.73 + progress * 11) * (3 + progress * 8);
       final squeeze = 1 - progress * .12 * sin(angle * 3 + 1.1);
-      points.add(
-        center + Offset(cosA * radius * squeeze, sinA * radius),
-      );
+      points.add(center + Offset(cosA * radius * squeeze, sinA * radius));
     }
 
     final path = Path();
@@ -201,12 +200,36 @@ class _CreasePainter extends CustomPainter {
       ..strokeCap = StrokeCap.round;
 
     final creases = [
-      [const Offset(.08, .22), const Offset(.36, .31), const Offset(.53, .52)],
-      [const Offset(.93, .15), const Offset(.69, .34), const Offset(.53, .52)],
-      [const Offset(.12, .82), const Offset(.34, .67), const Offset(.53, .52)],
-      [const Offset(.88, .88), const Offset(.72, .65), const Offset(.53, .52)],
-      [const Offset(.45, .02), const Offset(.42, .29), const Offset(.53, .52)],
-      [const Offset(.58, .98), const Offset(.61, .71), const Offset(.53, .52)],
+      [
+        const Offset(.08, .22),
+        const Offset(.36, .31),
+        const Offset(.53, .52),
+      ],
+      [
+        const Offset(.93, .15),
+        const Offset(.69, .34),
+        const Offset(.53, .52),
+      ],
+      [
+        const Offset(.12, .82),
+        const Offset(.34, .67),
+        const Offset(.53, .52),
+      ],
+      [
+        const Offset(.88, .88),
+        const Offset(.72, .65),
+        const Offset(.53, .52),
+      ],
+      [
+        const Offset(.45, .02),
+        const Offset(.42, .29),
+        const Offset(.53, .52),
+      ],
+      [
+        const Offset(.58, .98),
+        const Offset(.61, .71),
+        const Offset(.53, .52),
+      ],
     ];
 
     for (var i = 0; i < creases.length; i++) {
