@@ -16,16 +16,12 @@ class GameInfo {
 }
 
 const games = [
-  GameInfo('race', 'Sifon Sprint', '🚽', 'YARIŞ', 'Hızlı dokun'),
-  GameInfo('catch', 'Damlayı Yakala', '💧', 'REFLEKS', 'Zamanlamanı göster'),
-  GameInfo('sumo', 'Peçete Sumo', '🧻', 'ARENA', 'Ringden dışarı it'),
-  GameInfo('dodge', 'Sızıntıdan Kaç', '☔', 'KAÇIŞ', 'Şerit değiştir'),
-  GameInfo('target', 'Pompa Patlat', '🪠', 'HEDEF', 'Çıkan hedefi vur'),
-  GameInfo('memory', 'Leke Hafızası', '🟨', 'HAFIZA', 'Deseni hatırla'),
-  GameInfo('panic', 'Sakın Basma', '🚨', 'SİNİR', 'Yeşili bekle'),
-  GameInfo('balance', 'Rulo Dengesi', '⚖️', 'DENGE', 'Ortada tut'),
-  GameInfo('pong', 'Gider Pong', '🏓', 'DÜELLO', 'Kaleni koru'),
-  GameInfo('territory', 'Kuru Yer Kapmaca', '🧼', 'TAKTİK', 'Alanı ele geçir'),
+  GameInfo('shooting', 'Hedef Atışı', '🎯', 'SHOOTING', '20 saniyede hedefleri vur'),
+  GameInfo('puzzle', 'Kaydır', '🔢', 'ZEKA', 'Sayıları doğru sıraya diz'),
+  GameInfo('reflex', 'Yeşili Bekle', '🟢', 'REFLEKS', 'Erken basmadan yakala'),
+  GameInfo('odd', 'Farklı Olan', '👀', 'DİKKAT', 'Aykırı simgeyi bul'),
+  GameInfo('color', 'Renk mi Kelime mi?', '🌈', 'HIZ', 'Gördüğüne güven'),
+  GameInfo('count', 'Kaç Tane?', '⚫', 'SAYI', 'Bir bakışta say'),
 ];
 
 class GamesPage extends StatelessWidget {
@@ -39,7 +35,7 @@ class GamesPage extends StatelessWidget {
           child: Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              'Büyük Oyunlar',
+              'Mini Oyunlar',
               style: TextStyle(fontSize: 27, fontWeight: FontWeight.w900),
             ),
           ),
@@ -55,7 +51,7 @@ class GamesPage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'PECHATE PARTY',
+                'HIZLI OYNA',
                 style: TextStyle(
                   color: _yellow,
                   fontWeight: FontWeight.w900,
@@ -63,7 +59,7 @@ class GamesPage extends StatelessWidget {
                 ),
               ),
               Text(
-                'Tek telefon. Dört parmak. Sıfır huzur.',
+                'Kısa, sade ve eğlenceli.',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 23,
@@ -71,7 +67,7 @@ class GamesPage extends StatelessWidget {
                 ),
               ),
               Text(
-                '10 oyun · 2–4 kişi · tek dokunuş kontrolleri',
+                '6 oyun · tek oyuncu · 30 saniyeden kısa',
                 style: TextStyle(color: Colors.white60),
               ),
             ],
@@ -98,7 +94,7 @@ class GamesPage extends StatelessWidget {
                 child: InkWell(
                   onTap: () => Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => PartyGame(game: g)),
+                    MaterialPageRoute(builder: (_) => QuickGame(game: g)),
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(12),
@@ -152,6 +148,486 @@ class GamesPage extends StatelessWidget {
       ],
     ),
   );
+}
+
+class QuickGame extends StatefulWidget {
+  final GameInfo game;
+
+  const QuickGame({super.key, required this.game});
+
+  @override
+  State<QuickGame> createState() => _QuickGameState();
+}
+
+class _QuickGameState extends State<QuickGame> {
+  final rng = Random();
+  final stopwatch = Stopwatch();
+  Timer? timer;
+  Timer? secondTimer;
+  int score = 0;
+  int round = 0;
+  int timeLeft = 20;
+  int target = 0;
+  int oddIndex = 0;
+  int colorWord = 0;
+  int colorInk = 0;
+  int dotCount = 0;
+  int moves = 0;
+  bool go = false;
+  bool finished = false;
+  String resultText = '';
+  List<int> puzzle = List.generate(9, (i) => (i + 1) % 9);
+  List<int> countOptions = [];
+
+  static const colorNames = ['KIRMIZI', 'MAVİ', 'YEŞİL', 'SARI'];
+  static const colorValues = [
+    Color(0xffe5484d),
+    Color(0xff2f75dc),
+    Color(0xff35a854),
+    Color(0xffe6aa08),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _start());
+  }
+
+  @override
+  void dispose() {
+    timer?.cancel();
+    secondTimer?.cancel();
+    super.dispose();
+  }
+
+  void _start() {
+    timer?.cancel();
+    secondTimer?.cancel();
+    setState(() {
+      score = 0;
+      round = 0;
+      timeLeft = 20;
+      moves = 0;
+      go = false;
+      finished = false;
+      resultText = '';
+    });
+    switch (widget.game.id) {
+      case 'shooting':
+        target = rng.nextInt(12);
+        timer = Timer.periodic(const Duration(milliseconds: 650), (_) {
+          if (mounted && !finished) setState(() => target = rng.nextInt(12));
+        });
+        secondTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+          if (!mounted || finished) return;
+          setState(() => timeLeft--);
+          if (timeLeft == 0) _finish('$score hedef vurdun.');
+        });
+        break;
+      case 'puzzle':
+        _shufflePuzzle();
+        break;
+      case 'reflex':
+        stopwatch.reset();
+        timer = Timer(Duration(milliseconds: 1400 + rng.nextInt(2200)), () {
+          if (!mounted || finished) return;
+          stopwatch.start();
+          setState(() => go = true);
+        });
+        break;
+      case 'odd':
+        _nextOdd();
+        break;
+      case 'color':
+        _nextColor();
+        break;
+      case 'count':
+        _nextCount();
+        break;
+    }
+  }
+
+  void _finish(String text) {
+    timer?.cancel();
+    secondTimer?.cancel();
+    stopwatch.stop();
+    setState(() {
+      finished = true;
+      resultText = text;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    backgroundColor: _yellow,
+    appBar: AppBar(
+      backgroundColor: _yellow,
+      title: Text(
+        '${widget.game.emoji} ${widget.game.name}',
+        style: const TextStyle(fontWeight: FontWeight.w900),
+      ),
+    ),
+    body: SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            _scoreBar(),
+            const SizedBox(height: 12),
+            Expanded(
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: _paper,
+                  border: Border.all(color: _ink, width: 4),
+                  borderRadius: BorderRadius.circular(28),
+                ),
+                child: finished ? _result() : _gameBody(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+
+  Widget _scoreBar() => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+    decoration: BoxDecoration(
+      color: _ink,
+      borderRadius: BorderRadius.circular(18),
+    ),
+    child: Row(
+      children: [
+        Expanded(
+          child: Text(
+            _hint(),
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        Text(
+          widget.game.id == 'shooting' ? '$timeLeft sn · $score' : 'Skor $score',
+          style: const TextStyle(color: _yellow, fontWeight: FontWeight.w900),
+        ),
+      ],
+    ),
+  );
+
+  Widget _gameBody() => switch (widget.game.id) {
+    'shooting' => _shooting(),
+    'puzzle' => _puzzle(),
+    'reflex' => _reflex(),
+    'odd' => _odd(),
+    'color' => _color(),
+    _ => _count(),
+  };
+
+  Widget _shooting() => GridView.builder(
+    physics: const NeverScrollableScrollPhysics(),
+    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+      crossAxisCount: 3,
+      crossAxisSpacing: 10,
+      mainAxisSpacing: 10,
+    ),
+    itemCount: 12,
+    itemBuilder: (_, i) => AnimatedContainer(
+      duration: const Duration(milliseconds: 140),
+      decoration: BoxDecoration(
+        color: i == target ? const Color(0xffff6b67) : const Color(0xffe9e5dc),
+        shape: BoxShape.circle,
+        border: Border.all(color: _ink, width: i == target ? 4 : 1),
+      ),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: () {
+          if (i != target) return;
+          setState(() {
+            score++;
+            target = rng.nextInt(12);
+          });
+        },
+        child: Center(
+          child: Text(
+            i == target ? '🎯' : '',
+            style: const TextStyle(fontSize: 34),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  void _shufflePuzzle() {
+    puzzle = List.generate(9, (i) => (i + 1) % 9);
+    for (var i = 0; i < 90; i++) {
+      final zero = puzzle.indexOf(0);
+      final neighbors = _neighbors(zero);
+      final next = neighbors[rng.nextInt(neighbors.length)];
+      final temp = puzzle[zero];
+      puzzle[zero] = puzzle[next];
+      puzzle[next] = temp;
+    }
+    setState(() {});
+  }
+
+  List<int> _neighbors(int index) {
+    final values = <int>[];
+    final row = index ~/ 3;
+    final col = index % 3;
+    if (row > 0) values.add(index - 3);
+    if (row < 2) values.add(index + 3);
+    if (col > 0) values.add(index - 1);
+    if (col < 2) values.add(index + 1);
+    return values;
+  }
+
+  Widget _puzzle() => Center(
+    child: AspectRatio(
+      aspectRatio: 1,
+      child: GridView.builder(
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          crossAxisSpacing: 8,
+          mainAxisSpacing: 8,
+        ),
+        itemCount: 9,
+        itemBuilder: (_, i) => AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          decoration: BoxDecoration(
+            color: puzzle[i] == 0 ? Colors.transparent : _water,
+            borderRadius: BorderRadius.circular(16),
+            border: puzzle[i] == 0 ? null : Border.all(color: _ink, width: 2),
+          ),
+          child: InkWell(
+            onTap: puzzle[i] == 0 ? null : () => _movePuzzle(i),
+            child: Center(
+              child: Text(
+                puzzle[i] == 0 ? '' : '${puzzle[i]}',
+                style: const TextStyle(fontSize: 34, fontWeight: FontWeight.w900),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  void _movePuzzle(int index) {
+    final zero = puzzle.indexOf(0);
+    if (!_neighbors(zero).contains(index)) return;
+    setState(() {
+      puzzle[zero] = puzzle[index];
+      puzzle[index] = 0;
+      moves++;
+      score = max(0, 100 - moves * 2);
+    });
+    if (List.generate(9, (i) => (i + 1) % 9).join() == puzzle.join()) {
+      _finish('$moves hamlede çözdün.');
+    }
+  }
+
+  Widget _reflex() => InkWell(
+    onTap: () {
+      if (!go) {
+        _finish('Erken bastın. Biraz daha sabır!');
+      } else {
+        final milliseconds = stopwatch.elapsedMilliseconds;
+        score = max(0, 1000 - milliseconds);
+        _finish('Tepki süren $milliseconds ms.');
+      }
+    },
+    borderRadius: BorderRadius.circular(24),
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      decoration: BoxDecoration(
+        color: go ? const Color(0xff54cf73) : const Color(0xffe84f55),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Center(
+        child: Text(
+          go ? 'ŞİMDİ BAS!' : 'BEKLE…',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 32,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ),
+    ),
+  );
+
+  void _nextOdd() {
+    oddIndex = rng.nextInt(16);
+    setState(() {});
+  }
+
+  Widget _odd() => GridView.builder(
+    physics: const NeverScrollableScrollPhysics(),
+    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+      crossAxisCount: 4,
+      crossAxisSpacing: 8,
+      mainAxisSpacing: 8,
+    ),
+    itemCount: 16,
+    itemBuilder: (_, i) => FilledButton(
+      onPressed: () {
+        if (i != oddIndex) return;
+        setState(() {
+          score++;
+          round++;
+        });
+        if (round == 5) {
+          _finish('5 farklı simgeyi de buldun.');
+        } else {
+          _nextOdd();
+        }
+      },
+      style: FilledButton.styleFrom(
+        padding: EdgeInsets.zero,
+        backgroundColor: const Color(0xffeeeae2),
+        foregroundColor: _ink,
+      ),
+      child: Text(i == oddIndex ? '😎' : '🙂', style: const TextStyle(fontSize: 28)),
+    ),
+  );
+
+  void _nextColor() {
+    colorWord = rng.nextInt(colorNames.length);
+    colorInk = rng.nextInt(colorValues.length);
+    setState(() {});
+  }
+
+  Widget _color() => Column(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      Text(
+        colorNames[colorWord],
+        style: TextStyle(
+          color: colorValues[colorInk],
+          fontSize: 45,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+      const SizedBox(height: 45),
+      Row(
+        children: [
+          Expanded(child: _answerButton('EŞLEŞİYOR', colorWord == colorInk)),
+          const SizedBox(width: 10),
+          Expanded(child: _answerButton('FARKLI', colorWord != colorInk)),
+        ],
+      ),
+    ],
+  );
+
+  Widget _answerButton(String label, bool correct) => FilledButton(
+    onPressed: () {
+      setState(() {
+        if (correct) score++;
+        round++;
+      });
+      if (round == 10) {
+        _finish('10 soruda $score doğru yaptın.');
+      } else {
+        _nextColor();
+      }
+    },
+    style: FilledButton.styleFrom(
+      minimumSize: const Size.fromHeight(65),
+      backgroundColor: _ink,
+    ),
+    child: Text(label),
+  );
+
+  void _nextCount() {
+    dotCount = 5 + rng.nextInt(11);
+    final options = <int>{dotCount};
+    while (options.length < 4) {
+      options.add(max(1, dotCount - 3 + rng.nextInt(7)));
+    }
+    countOptions = options.toList()..shuffle(rng);
+    setState(() {});
+  }
+
+  Widget _count() => Column(
+    children: [
+      Expanded(
+        child: Center(
+          child: Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 12,
+            runSpacing: 12,
+            children: List.generate(
+              dotCount,
+              (i) => Text(
+                ['●', '▲', '■'][round % 3],
+                style: TextStyle(
+                  color: colorValues[i % colorValues.length],
+                  fontSize: 30,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+      Wrap(
+        spacing: 8,
+        children: countOptions
+            .map(
+              (value) => FilledButton(
+                onPressed: () {
+                  setState(() {
+                    if (value == dotCount) score++;
+                    round++;
+                  });
+                  if (round == 5) {
+                    _finish('5 turda $score doğru saydın.');
+                  } else {
+                    _nextCount();
+                  }
+                },
+                style: FilledButton.styleFrom(backgroundColor: _ink),
+                child: Text('$value'),
+              ),
+            )
+            .toList(),
+      ),
+    ],
+  );
+
+  Widget _result() => Center(
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(widget.game.emoji, style: const TextStyle(fontSize: 72)),
+        const SizedBox(height: 12),
+        Text(
+          resultText,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 23, fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 24),
+        FilledButton.icon(
+          onPressed: _start,
+          style: FilledButton.styleFrom(backgroundColor: _ink),
+          icon: const Icon(Icons.replay),
+          label: const Text('TEKRAR OYNA'),
+        ),
+      ],
+    ),
+  );
+
+  String _hint() => switch (widget.game.id) {
+    'shooting' => 'Beliren hedefe dokun.',
+    'puzzle' => 'Boşluğa komşu sayıları kaydır.',
+    'reflex' => 'Kırmızıdayken bekle, yeşilde bas.',
+    'odd' => 'Diğerlerinden farklı olanı bul.',
+    'color' => 'Kelime ile yazı rengi aynı mı?',
+    _ => 'Şekilleri hızlıca say.',
+  };
 }
 
 class PartyGame extends StatefulWidget {
