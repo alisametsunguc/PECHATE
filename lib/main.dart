@@ -80,13 +80,25 @@ class _SplashScreenState extends State<SplashScreen>
             opacity: 1 - drop,
             child: Transform.translate(
               offset: Offset(sin(t * 13) * 5 * crumple, drop * drop * 90),
-              child: Transform.rotate(
-                angle: sin(crumple * pi * 4.5) * .055 + drop * .18,
-                child: Transform(
-                  alignment: Alignment.center,
-                  transform: Matrix4.diagonal3Values(scaleX, scaleY, 1),
-                  child: _CrumpledTissue(progress: crumple),
-                ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Transform.rotate(
+                    angle: sin(crumple * pi * 4.5) * .055 + drop * .18,
+                    child: Transform(
+                      alignment: Alignment.center,
+                      transform: Matrix4.diagonal3Values(scaleX, scaleY, 1),
+                      child: _CrumpledTissue(progress: crumple),
+                    ),
+                  ),
+                  Opacity(
+                    opacity: 1 - ((crumple - .58) / .34).clamp(0.0, 1.0),
+                    child: Transform.scale(
+                      scale: 1 - crumple * .08,
+                      child: const _PechateMark(),
+                    ),
+                  ),
+                ],
               ),
             ),
           );
@@ -110,18 +122,130 @@ class _CrumpledTissue extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Transform.scale(
-            scale: 1 + progress * .38,
-            child: Image.asset(
-              'assets/branding/pecete-chat-logo-v3.png',
-              fit: BoxFit.cover,
-            ),
-          ),
+          CustomPaint(painter: _PaperSurfacePainter()),
           CustomPaint(painter: _CreasePainter(progress)),
         ],
       ),
     ),
   );
+}
+
+class _PechateMark extends StatelessWidget {
+  const _PechateMark();
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: 112,
+    height: 132,
+    child: CustomPaint(painter: _PechateMarkPainter()),
+  );
+}
+
+class _PechateMarkPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final shadow = Paint()
+      ..color = Colors.black.withValues(alpha: .16)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 13
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    final mark = Paint()
+      ..color = const Color(0xfff7f4ec)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 10
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    final path = Path()
+      ..moveTo(size.width * .34, size.height * .72)
+      ..lineTo(size.width * .34, size.height * .2)
+      ..quadraticBezierTo(
+        size.width * .34,
+        size.height * .09,
+        size.width * .48,
+        size.height * .09,
+      )
+      ..lineTo(size.width * .61, size.height * .09)
+      ..quadraticBezierTo(
+        size.width * .84,
+        size.height * .09,
+        size.width * .84,
+        size.height * .3,
+      )
+      ..quadraticBezierTo(
+        size.width * .84,
+        size.height * .5,
+        size.width * .59,
+        size.height * .5,
+      )
+      ..lineTo(size.width * .35, size.height * .5);
+    final drop = Path()
+      ..moveTo(size.width * .34, size.height * .67)
+      ..cubicTo(
+        size.width * .26,
+        size.height * .79,
+        size.width * .23,
+        size.height * .85,
+        size.width * .23,
+        size.height * .9,
+      )
+      ..cubicTo(
+        size.width * .23,
+        size.height,
+        size.width * .46,
+        size.height,
+        size.width * .46,
+        size.height * .9,
+      )
+      ..cubicTo(
+        size.width * .46,
+        size.height * .84,
+        size.width * .41,
+        size.height * .76,
+        size.width * .34,
+        size.height * .67,
+      );
+
+    canvas.drawPath(path.shift(const Offset(3, 4)), shadow);
+    canvas.drawPath(drop.shift(const Offset(3, 4)), shadow);
+    canvas.drawPath(path, mark);
+    canvas.drawPath(drop, mark);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _PaperSurfacePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final surface = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xffffffff), Color(0xffeeeae1)],
+      ).createShader(Offset.zero & size);
+    canvas.drawRect(Offset.zero & size, surface);
+
+    final fiber = Paint()
+      ..color = ink.withValues(alpha: .035)
+      ..strokeWidth = .8
+      ..strokeCap = StrokeCap.round;
+    for (var i = 0; i < 95; i++) {
+      final x = (sin(i * 12.73) * .5 + .5) * size.width;
+      final y = (cos(i * 8.41) * .5 + .5) * size.height;
+      final length = 2 + (i % 5) * 1.3;
+      canvas.drawLine(
+        Offset(x, y),
+        Offset(x + cos(i.toDouble()) * length, y + sin(i.toDouble()) * length),
+        fiber,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _OrganicTissueClipper extends CustomClipper<Path> {
