@@ -42,7 +42,7 @@ class _SplashScreenState extends State<SplashScreen>
     super.initState();
     controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1850),
+      duration: const Duration(milliseconds: 2600),
     )..forward();
     controller.addStatusListener((status) {
       if (status == AnimationStatus.completed && mounted) {
@@ -69,17 +69,18 @@ class _SplashScreenState extends State<SplashScreen>
         builder: (_, child) {
           final t = controller.value;
           final crumple = Curves.easeInOutCubic.transform(
-            ((t - .08) / .72).clamp(0.0, 1.0),
+            ((t - .05) / .88).clamp(0.0, 1.0),
           );
-          final drop = Curves.easeInQuad.transform(
-            ((t - .72) / .28).clamp(0.0, 1.0),
+          final vanish = Curves.easeInQuad.transform(
+            ((t - .88) / .12).clamp(0.0, 1.0),
           );
+          final scale = 1 - crumple * .93;
           return Opacity(
-            opacity: 1 - drop,
-            child: Transform.translate(
-              offset: Offset(sin(t * 13) * 5 * crumple, drop * drop * 90),
+            opacity: 1 - vanish,
+            child: Transform.scale(
+              scale: scale,
               child: Transform.rotate(
-                angle: sin(crumple * pi * 4.5) * .055 + drop * .18,
+                angle: sin(crumple * pi * 4.5) * .045,
                 child: _CrumpledTissue(progress: crumple),
               ),
             ),
@@ -146,7 +147,7 @@ class _OrganicTissueClipper extends CustomClipper<Path> {
       final softSquareRadius = min(edgeRadius, size.shortestSide * .61);
       final foldedRadius =
           size.shortestSide *
-          (.43 * (1 - progress) + .045 + sin(i * 2.17 + progress * 7) * .018);
+          (.43 * (1 - progress) + .32 + sin(i * 2.17 + progress * 7) * .028);
       final radius =
           softSquareRadius * (1 - progress) +
           foldedRadius * progress +
