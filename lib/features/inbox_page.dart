@@ -193,9 +193,8 @@ class _InboxPageState extends State<InboxPage>
             absorbing: markingAllRead,
             child: AnimatedBuilder(
               animation: readFlood,
-              builder: (_, __) => CustomPaint(
-                painter: _ReadFloodPainter(readFlood.value),
-              ),
+              builder: (_, __) =>
+                  CustomPaint(painter: _ReadFloodPainter(readFlood.value)),
             ),
           ),
         ),
@@ -249,10 +248,7 @@ class _ReadFloodPainter extends CustomPainter {
       ..strokeWidth = 3;
     final foamPath = Path()..moveTo(0, waterBottom);
     for (double x = 0; x <= size.width; x += 5) {
-      foamPath.lineTo(
-        x,
-        waterBottom + sin(x / 24 + progress * pi * 10) * 7,
-      );
+      foamPath.lineTo(x, waterBottom + sin(x / 24 + progress * pi * 10) * 7);
     }
     canvas.drawPath(foamPath, foam);
 
