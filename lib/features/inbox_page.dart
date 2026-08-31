@@ -379,6 +379,17 @@ class _ChatPageState extends State<ChatPage> {
     input.clear();
   }
 
+  Future<void> openGames() async {
+    final result = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => ChatGameSheet(opponentName: widget.name),
+    );
+    if (result != null && mounted) {
+      setState(() => messages.add('🎮 $result'));
+    }
+  }
+
   @override
   void dispose() {
     input.dispose();
@@ -396,11 +407,7 @@ class _ChatPageState extends State<ChatPage> {
       ),
       actions: [
         IconButton(
-          onPressed: () => showModalBottomSheet(
-            context: context,
-            isScrollControlled: true,
-            builder: (_) => const ChatGameSheet(),
-          ),
+          onPressed: openGames,
           icon: const Icon(Icons.sports_esports),
         ),
       ],
@@ -466,10 +473,7 @@ class _ChatPageState extends State<ChatPage> {
             child: Row(
               children: [
                 IconButton(
-                  onPressed: () => showModalBottomSheet(
-                    context: context,
-                    builder: (_) => const ChatGameSheet(),
-                  ),
+                  onPressed: openGames,
                   icon: const Icon(Icons.add_circle),
                 ),
                 Expanded(
@@ -563,16 +567,19 @@ class _FlushViewerState extends State<FlushViewer>
 }
 
 class ChatGameSheet extends StatelessWidget {
-  const ChatGameSheet({super.key});
+  final String opponentName;
+
+  const ChatGameSheet({super.key, required this.opponentName});
+
   @override
   Widget build(BuildContext context) {
-    const games = [
-      'XOX',
-      'Taş Kâğıt Makas',
-      'Bu mu Şu mu',
-      'İki Doğru Bir Yalan',
-      'Aynı Cevabı Bul',
-      'Damla Soru',
+    const games = <_ChatGameInfo>[
+      _ChatGameInfo('xox', 'XOX', '⭕', 'Üçünü yan yana getir.'),
+      _ChatGameInfo('rps', 'Taş Kâğıt Makas', '✊', 'Seçimini gizli yap.'),
+      _ChatGameInfo('either', 'Bu mu Şu mu', '⚡', 'Aynı tarafı seçebilecek misiniz?'),
+      _ChatGameInfo('lie', 'İki Doğru Bir Yalan', '🤥', 'Yalanı yakala.'),
+      _ChatGameInfo('same', 'Aynı Cevabı Bul', '🧠', 'Aynı şeyi düşünüyor musunuz?'),
+      _ChatGameInfo('drop', 'Damla Soru', '💧', 'Sohbeti derinleştir.'),
     ];
     return SafeArea(
       child: Padding(
@@ -584,6 +591,12 @@ class ChatGameSheet extends StatelessWidget {
               'Sohbette Oyna',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
             ),
+            const SizedBox(height: 4),
+            Text(
+              'Telefonu sırayla birbirinize verin.',
+              style: TextStyle(color: _ink.withValues(alpha: .62)),
+            ),
+            const SizedBox(height: 12),
             GridView.builder(
               shrinkWrap: true,
               itemCount: games.length,
@@ -594,12 +607,40 @@ class ChatGameSheet extends StatelessWidget {
               itemBuilder: (_, i) => Card(
                 color: i.isEven ? _yellow : _water,
                 child: InkWell(
-                  onTap: () => Navigator.pop(context),
-                  child: Center(
-                    child: Text(
-                      games[i],
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontWeight: FontWeight.w900),
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () async {
+                    final result = await Navigator.push<String>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => _ChatGameArena(
+                          game: games[i],
+                          opponentName: opponentName,
+                        ),
+                      ),
+                    );
+                    if (result != null && context.mounted) {
+                      Navigator.pop(context, result);
+                    }
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(games[i].emoji, style: const TextStyle(fontSize: 28)),
+                        const SizedBox(height: 5),
+                        Text(
+                          games[i].name,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontWeight: FontWeight.w900),
+                        ),
+                        Text(
+                          games[i].description,
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          style: const TextStyle(fontSize: 11),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -610,4 +651,392 @@ class ChatGameSheet extends StatelessWidget {
       ),
     );
   }
+}
+
+class _ChatGameInfo {
+  final String id;
+  final String name;
+  final String emoji;
+  final String description;
+
+  const _ChatGameInfo(this.id, this.name, this.emoji, this.description);
+}
+
+class _ChatGameArena extends StatefulWidget {
+  final _ChatGameInfo game;
+  final String opponentName;
+
+  const _ChatGameArena({
+    required this.game,
+    required this.opponentName,
+  });
+
+  @override
+  State<_ChatGameArena> createState() => _ChatGameArenaState();
+}
+
+class _ChatGameArenaState extends State<_ChatGameArena> {
+  final rng = Random();
+  final board = List<String>.filled(9, '');
+  String turn = 'X';
+  String? firstChoice;
+  String? result;
+  int stage = 0;
+  late final int promptIndex;
+  late final int lieIndex;
+  late final int questionIndex;
+
+  static const _eitherPrompts = [
+    ('Gece yürüyüşü', 'Sabah kahvesi'),
+    ('Deniz kenarı', 'Dağ evi'),
+    ('Planlı buluşma', 'Ani kaçamak'),
+    ('Sesli mesaj', 'Uzun mesaj'),
+    ('Tatlı', 'Tuzlu'),
+  ];
+  static const _samePrompts = [
+    ('Birlikte kaçsak nereye?', ['Sahil', 'Orman', 'Şehir', 'Ev']),
+    ('Şu an ne iyi gider?', ['Kahve', 'Yemek', 'Müzik', 'Uyku']),
+    ('Bizi anlatan renk?', ['Sarı', 'Mavi', 'Kırmızı', 'Mor']),
+    ('Ortak süper gücümüz?', ['Işınlanma', 'Zihin okuma', 'Zaman', 'Şans']),
+  ];
+  static const _lieCards = [
+    ['Bir keresinde uçağı kaçırdım.', 'Gizlice şiir yazıyorum.', 'Hiç dondurma yemedim.'],
+    ['Gece yüzmeye bayılırım.', 'Bir ünlüyle karşılaştım.', 'Kahve kokusunu sevmem.'],
+    ['Çocukken evden kaçtım.', 'Üç dil konuşuyorum.', 'Yağmurda yürümeyi severim.'],
+  ];
+  static const _dropQuestions = [
+    'Kimseye kolay kolay söylemediğin bir hayalin ne?',
+    'Birlikte yaşayacağımız kusursuz bir gün nasıl başlardı?',
+    'Bende ilk fark ettiğin ama hiç söylemediğin şey ne?',
+    'Şu an hiçbir sonuç olmayacak olsa neyi itiraf ederdin?',
+    'İkimizin hikâyesine bir isim versen ne olurdu?',
+    'Beni tek bir şarkıyla anlatman gerekse hangisi olurdu?',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    promptIndex = rng.nextInt(_eitherPrompts.length);
+    lieIndex = rng.nextInt(3);
+    questionIndex = rng.nextInt(_dropQuestions.length);
+  }
+
+  void finish(String value) => setState(() => result = value);
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    backgroundColor: _yellow,
+    appBar: AppBar(
+      backgroundColor: _yellow,
+      title: Text(
+        '${widget.game.emoji} ${widget.game.name}',
+        style: const TextStyle(fontWeight: FontWeight.w900),
+      ),
+    ),
+    body: SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(18, 10, 18, 18),
+        child: result == null ? _game() : _resultCard(),
+      ),
+    ),
+  );
+
+  Widget _game() => Column(
+    children: [
+      Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: _ink,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          _instruction(),
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+      const SizedBox(height: 14),
+      Expanded(
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: _paper,
+            border: Border.all(color: _ink, width: 4),
+            borderRadius: BorderRadius.circular(28),
+          ),
+          child: switch (widget.game.id) {
+            'xox' => _xox(),
+            'rps' => _secretChoices(['✊', '✋', '✌️']),
+            'either' => _secretChoices([
+              _eitherPrompts[promptIndex].$1,
+              _eitherPrompts[promptIndex].$2,
+            ]),
+            'lie' => _lie(),
+            'same' => _secretChoices(
+              _samePrompts[promptIndex % _samePrompts.length].$2,
+            ),
+            _ => _drop(),
+          },
+        ),
+      ),
+    ],
+  );
+
+  String _instruction() => switch (widget.game.id) {
+    'xox' => 'Sıra $turn oyuncusunda · İlk üçlü kazanır.',
+    'rps' => stage == 0
+        ? 'Önce sen gizli seçimini yap.'
+        : stage == 1
+        ? 'Ekranı ${widget.opponentName} kişisine ver.'
+        : '${widget.opponentName}, şimdi sen seç.',
+    'either' || 'same' => stage == 0
+        ? 'Önce sen seç. Cevabın gizlenecek.'
+        : stage == 1
+        ? 'Ekranı ${widget.opponentName} kişisine ver.'
+        : '${widget.opponentName}, içinden geleni seç.',
+    'lie' => '${widget.opponentName} hakkında yalan olan cümleyi yakala.',
+    _ => 'Damlayı aç. Cevaptan kaçmak yok.',
+  };
+
+  Widget _xox() => Center(
+    child: AspectRatio(
+      aspectRatio: 1,
+      child: GridView.builder(
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          crossAxisSpacing: 8,
+          mainAxisSpacing: 8,
+        ),
+        itemCount: 9,
+        itemBuilder: (_, i) => FilledButton(
+          onPressed: board[i].isEmpty ? () => _playXox(i) : null,
+          style: FilledButton.styleFrom(
+            padding: EdgeInsets.zero,
+            backgroundColor: i.isEven ? _water : Colors.white,
+            disabledBackgroundColor: i.isEven ? _water : Colors.white,
+            foregroundColor: _ink,
+            disabledForegroundColor: _ink,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: const BorderSide(color: _ink, width: 2),
+            ),
+          ),
+          child: Text(
+            board[i],
+            style: const TextStyle(fontSize: 42, fontWeight: FontWeight.w900),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  void _playXox(int i) {
+    setState(() {
+      board[i] = turn;
+      final winner = _winner();
+      if (winner != null) {
+        result = winner == 'Berabere'
+            ? 'XOX berabere bitti. Rövanş şart!'
+            : 'XOX kazananı: $winner 🎉';
+      } else {
+        turn = turn == 'X' ? 'O' : 'X';
+      }
+    });
+  }
+
+  String? _winner() {
+    const lines = [
+      [0, 1, 2], [3, 4, 5], [6, 7, 8],
+      [0, 3, 6], [1, 4, 7], [2, 5, 8],
+      [0, 4, 8], [2, 4, 6],
+    ];
+    for (final line in lines) {
+      if (board[line[0]].isNotEmpty &&
+          board[line[0]] == board[line[1]] &&
+          board[line[1]] == board[line[2]]) {
+        return board[line[0]];
+      }
+    }
+    return board.every((cell) => cell.isNotEmpty) ? 'Berabere' : null;
+  }
+
+  Widget _secretChoices(List<String> choices) {
+    if (stage == 1) {
+      return Center(
+        child: FilledButton.icon(
+          onPressed: () => setState(() => stage = 2),
+          style: FilledButton.styleFrom(
+            backgroundColor: _ink,
+            minimumSize: const Size(220, 74),
+          ),
+          icon: const Icon(Icons.visibility_off),
+          label: Text('${widget.opponentName} HAZIR'),
+        ),
+      );
+    }
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        if (widget.game.id == 'same') ...[
+          Text(
+            _samePrompts[promptIndex % _samePrompts.length].$1,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 18),
+        ],
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 10,
+          runSpacing: 10,
+          children: choices
+              .map(
+                (choice) => FilledButton(
+                  onPressed: () => _chooseSecret(choice),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _water,
+                    foregroundColor: _ink,
+                    minimumSize: const Size(125, 70),
+                    side: const BorderSide(color: _ink, width: 2),
+                  ),
+                  child: Text(
+                    choice,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: widget.game.id == 'rps' ? 34 : 16,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              )
+              .toList(),
+        ),
+      ],
+    );
+  }
+
+  void _chooseSecret(String choice) {
+    if (stage == 0) {
+      setState(() {
+        firstChoice = choice;
+        stage = 1;
+      });
+      return;
+    }
+    if (widget.game.id == 'rps') {
+      const beats = {'✊': '✌️', '✋': '✊', '✌️': '✋'};
+      final outcome = firstChoice == choice
+          ? 'Berabere! İkiniz de $choice seçtiniz.'
+          : beats[firstChoice] == choice
+          ? 'Sen kazandın: $firstChoice, $choice seçimini yendi.'
+          : '${widget.opponentName} kazandı: $choice, $firstChoice seçimini yendi.';
+      finish('Taş Kâğıt Makas · $outcome');
+    } else {
+      final matched = firstChoice == choice;
+      finish(
+        matched
+            ? '${widget.game.name}: Aynı cevabı verdiniz — $choice 💦'
+            : '${widget.game.name}: Sen “$firstChoice”, ${widget.opponentName} “$choice” dedi.',
+      );
+    }
+  }
+
+  Widget _lie() {
+    final card = _lieCards[promptIndex % _lieCards.length];
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(
+        card.length,
+        (i) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: FilledButton(
+            onPressed: () => finish(
+              i == lieIndex
+                  ? 'Yalanı yakaladın! “${card[i]}” doğru cevapti. 🤥'
+                  : 'Yalan kaçtı! Asıl yalan: “${card[lieIndex]}”',
+            ),
+            style: FilledButton.styleFrom(
+              backgroundColor: i.isEven ? Colors.white : _water,
+              foregroundColor: _ink,
+              minimumSize: const Size.fromHeight(72),
+              side: const BorderSide(color: _ink, width: 2),
+            ),
+            child: Text(
+              card[i],
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _drop() => Center(
+    child: InkWell(
+      borderRadius: BorderRadius.circular(150),
+      onTap: stage == 0
+          ? () => setState(() => stage = 1)
+          : () => finish('Damla Soru: “${_dropQuestions[questionIndex]}”'),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 450),
+        width: stage == 0 ? 190 : 285,
+        height: stage == 0 ? 240 : 300,
+        padding: const EdgeInsets.all(28),
+        decoration: BoxDecoration(
+          color: _water,
+          border: Border.all(color: _ink, width: 4),
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(150),
+            topRight: const Radius.circular(150),
+            bottomLeft: const Radius.circular(150),
+            bottomRight: Radius.circular(stage == 0 ? 18 : 90),
+          ),
+        ),
+        child: Center(
+          child: Text(
+            stage == 0 ? '💧\nAÇ' : _dropQuestions[questionIndex],
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  Widget _resultCard() => Center(
+    child: Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: _paper,
+        border: Border.all(color: _ink, width: 4),
+        borderRadius: BorderRadius.circular(28),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(widget.game.emoji, style: const TextStyle(fontSize: 62)),
+          const SizedBox(height: 12),
+          Text(
+            result!,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 22),
+          FilledButton.icon(
+            onPressed: () => Navigator.pop(context, result),
+            style: FilledButton.styleFrom(backgroundColor: _ink),
+            icon: const Icon(Icons.chat_bubble),
+            label: const Text('SOHBETE GÖNDER'),
+          ),
+        ],
+      ),
+    ),
+  );
 }
