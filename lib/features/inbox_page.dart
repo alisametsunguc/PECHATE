@@ -405,10 +405,8 @@ class _ChatPageState extends State<ChatPage> {
     final result = await Navigator.push<String>(
       context,
       MaterialPageRoute(
-        builder: (_) => _ChatGameArena(
-          game: activeInvite.game,
-          opponentName: widget.name,
-        ),
+        builder: (_) =>
+            _ChatGameArena(game: activeInvite.game, opponentName: widget.name),
       ),
     );
     if (result != null && mounted) {
@@ -837,10 +835,19 @@ class _ChatGameArenaState extends State<_ChatGameArena> {
     'Yağmur başladığında gökyüzünden su yerine küçük mektuplar düştü.',
   ];
   static const _mirrorPrompts = [
-    ('Diğerinin en çok ihtiyaç duyduğu şey?', ['Dinlenmek', 'Anlaşılmak', 'Cesaret', 'Kahkaha']),
-    ('Zor bir günde ona nasıl yaklaşmalı?', ['Sarıl', 'Dinle', 'Alan ver', 'Güldür']),
+    (
+      'Diğerinin en çok ihtiyaç duyduğu şey?',
+      ['Dinlenmek', 'Anlaşılmak', 'Cesaret', 'Kahkaha'],
+    ),
+    (
+      'Zor bir günde ona nasıl yaklaşmalı?',
+      ['Sarıl', 'Dinle', 'Alan ver', 'Güldür'],
+    ),
     ('İlişkinizin gizli gücü?', ['Güven', 'Merak', 'Sabır', 'Tutku']),
-    ('Söylemeden anladığınız şey?', ['Özlemek', 'Kırılmak', 'Heyecan', 'Yorgunluk']),
+    (
+      'Söylemeden anladığınız şey?',
+      ['Özlemek', 'Kırılmak', 'Heyecan', 'Yorgunluk'],
+    ),
   ];
 
   @override
@@ -947,16 +954,18 @@ class _ChatGameArenaState extends State<_ChatGameArena> {
     'drop' => 'Damlayı aç. Cevaptan kaçmak yok.',
     'story' =>
       'Sıra ${storyTurn.isEven ? 'sende' : widget.opponentName}. Yalnızca bir cümle ekle.',
-    'mirror' => stage == 0
-        ? '${widget.opponentName} ne derdi? Gizli seç.'
-        : stage == 1
-        ? 'Ekranı ${widget.opponentName} kişisine ver.'
-        : '${widget.opponentName}, kendi cevabını seç.',
-    _ => stage == 0
-        ? 'Geleceğe bir not bırak. Notun gizlenecek.'
-        : stage == 1
-        ? 'Kapsülü ${widget.opponentName} kişisine ver.'
-        : '${widget.opponentName}, sen de bir not bırak.',
+    'mirror' =>
+      stage == 0
+          ? '${widget.opponentName} ne derdi? Gizli seç.'
+          : stage == 1
+          ? 'Ekranı ${widget.opponentName} kişisine ver.'
+          : '${widget.opponentName}, kendi cevabını seç.',
+    _ =>
+      stage == 0
+          ? 'Geleceğe bir not bırak. Notun gizlenecek.'
+          : stage == 1
+          ? 'Kapsülü ${widget.opponentName} kişisine ver.'
+          : '${widget.opponentName}, sen de bir not bırak.',
   };
 
   Widget _xox() => Center(
@@ -1229,7 +1238,9 @@ class _ChatGameArenaState extends State<_ChatGameArena> {
     final punctuation = RegExp(r'[.!?]').allMatches(sentence).length;
     if (punctuation > 1) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Her turda yalnızca bir cümle yazabilirsin.')),
+        const SnackBar(
+          content: Text('Her turda yalnızca bir cümle yazabilirsin.'),
+        ),
       );
       return;
     }
