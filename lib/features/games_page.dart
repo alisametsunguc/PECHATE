@@ -16,12 +16,42 @@ class GameInfo {
 }
 
 const games = [
-  GameInfo('shoot', 'Cep Düellosu', '🔫', '2–4 OYUNCU', 'Dönen nişanla rakibini vur'),
-  GameInfo('race', 'Turbo Dokunuş', '🏎️', '2–4 OYUNCU', 'En hızlı parmak kazanır'),
+  GameInfo(
+    'shoot',
+    'Cep Düellosu',
+    '🔫',
+    '2–4 OYUNCU',
+    'Dönen nişanla rakibini vur',
+  ),
+  GameInfo(
+    'race',
+    'Turbo Dokunuş',
+    '🏎️',
+    '2–4 OYUNCU',
+    'En hızlı parmak kazanır',
+  ),
   GameInfo('catch', 'Yıldızı Kap', '⭐', '2–4 OYUNCU', 'Doğru anda ilk sen bas'),
-  GameInfo('sumo', 'Mini Sumo', '🟠', '2–4 OYUNCU', 'Rakibini alanın dışına it'),
-  GameInfo('dodge', 'Son Platform', '🏃', '2–4 OYUNCU', 'Tehlikeli şeritten kaç'),
-  GameInfo('territory', 'Renk Kapmaca', '🟩', '2–4 OYUNCU', 'En çok kareyi ele geçir'),
+  GameInfo(
+    'sumo',
+    'Mini Sumo',
+    '🟠',
+    '2–4 OYUNCU',
+    'Rakibini alanın dışına it',
+  ),
+  GameInfo(
+    'dodge',
+    'Son Platform',
+    '🏃',
+    '2–4 OYUNCU',
+    'Tehlikeli şeritten kaç',
+  ),
+  GameInfo(
+    'territory',
+    'Renk Kapmaca',
+    '🟩',
+    '2–4 OYUNCU',
+    'En çok kareyi ele geçir',
+  ),
 ];
 
 class GamesPage extends StatelessWidget {
@@ -768,9 +798,10 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
         }
       }
       bullets.removeWhere(removed.contains);
-      final alive = List.generate(players, (i) => i)
-          .where((i) => lives[i] > 0)
-          .toList();
+      final alive = List.generate(
+        players,
+        (i) => i,
+      ).where((i) => lives[i] > 0).toList();
       if (alive.length <= 1) {
         final winner = alive.isEmpty
             ? score.indexOf(score.reduce(max))
