@@ -66,52 +66,9 @@ class GamesPage extends StatelessWidget {
         // dart format off
         Column(
           children: [
-        const Padding(
-          padding: EdgeInsets.fromLTRB(16, 15, 16, 10),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'Mini Oyunlar',
-              style: TextStyle(fontSize: 27, fontWeight: FontWeight.w900),
-            ),
-          ),
-        ),
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 15),
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: _ink,
-            borderRadius: BorderRadius.circular(25),
-          ),
-          child: const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'HIZLI OYNA',
-                style: TextStyle(
-                  color: _yellow,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 2,
-                ),
-              ),
-              Text(
-                'Aynı ekranda arkadaşlarına meydan oku.',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 23,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              Text(
-                '6 oyun · 2–4 oyuncu · joystick kontrolleri',
-                style: TextStyle(color: Colors.white60),
-              ),
-            ],
-          ),
-        ),
         Expanded(
           child: GridView.builder(
-            padding: const EdgeInsets.all(15),
+            padding: const EdgeInsets.fromLTRB(15, 18, 15, 15),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               crossAxisSpacing: 10,
