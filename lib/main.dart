@@ -1291,7 +1291,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   const Expanded(
                     child: _ProfileTitle(
                       title: 'Benden kareler',
-                      subtitle: 'Fotoğraf olur, video olur; vesikalık şart değil.',
+                      subtitle:
+                          'Fotoğraf olur, video olur; vesikalık şart değil.',
                     ),
                   ),
                   IconButton.outlined(
@@ -1570,11 +1571,7 @@ class _ProfileMedia {
   final Uint8List? bytes;
   final bool isVideo;
 
-  const _ProfileMedia({
-    required this.name,
-    this.bytes,
-    this.isVideo = false,
-  });
+  const _ProfileMedia({required this.name, this.bytes, this.isVideo = false});
 }
 
 class _ProfileMediaCard extends StatelessWidget {
@@ -1603,7 +1600,11 @@ class _ProfileMediaCard extends StatelessWidget {
                       const CircleAvatar(
                         radius: 27,
                         backgroundColor: water,
-                        child: Icon(Icons.play_arrow_rounded, color: ink, size: 36),
+                        child: Icon(
+                          Icons.play_arrow_rounded,
+                          color: ink,
+                          size: 36,
+                        ),
                       ),
                       const SizedBox(height: 9),
                       const Text(
@@ -1620,7 +1621,10 @@ class _ProfileMediaCard extends StatelessWidget {
                           item.name,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: Colors.white60, fontSize: 10),
+                          style: const TextStyle(
+                            color: Colors.white60,
+                            fontSize: 10,
+                          ),
                         ),
                       ),
                     ],
