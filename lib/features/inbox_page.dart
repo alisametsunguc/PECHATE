@@ -189,8 +189,8 @@ class _InboxPageState extends State<InboxPage>
           right: 0,
           top: 118,
           bottom: 0,
-          child: AbsorbPointer(
-            absorbing: markingAllRead,
+          child: IgnorePointer(
+            ignoring: !markingAllRead,
             child: AnimatedBuilder(
               animation: readFlood,
               builder: (_, __) =>

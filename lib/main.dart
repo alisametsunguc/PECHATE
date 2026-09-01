@@ -329,13 +329,16 @@ class _PostCardState extends State<PostCard> {
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => _CommentsSheet(
-        postOwner: widget.index.isEven ? 'Maya' : 'Alex',
-        comments: comments,
-        totalCount: 31 + comments.length - 3,
-        onAdded: (comment) {
-          setState(() => comments.add(comment));
-        },
+      builder: (sheetContext) => SizedBox(
+        height: MediaQuery.sizeOf(sheetContext).height * .88,
+        child: _CommentsSheet(
+          postOwner: widget.index.isEven ? 'Maya' : 'Alex',
+          comments: comments,
+          totalCount: 31 + comments.length - 3,
+          onAdded: (comment) {
+            setState(() => comments.add(comment));
+          },
+        ),
       ),
     );
   }
@@ -441,12 +444,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
   }
 
   @override
-  Widget build(BuildContext context) => DraggableScrollableSheet(
-    initialChildSize: .74,
-    minChildSize: .45,
-    maxChildSize: .94,
-    expand: false,
-    builder: (_, scrollController) => Container(
+  Widget build(BuildContext context) => Container(
       decoration: const BoxDecoration(
         color: paper,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
@@ -511,7 +509,6 @@ class _CommentsSheetState extends State<_CommentsSheet> {
           const Divider(height: 1, color: ink, thickness: 2),
           Expanded(
             child: ListView.separated(
-              controller: scrollController,
               padding: const EdgeInsets.fromLTRB(16, 15, 16, 20),
               itemCount: widget.comments.length,
               separatorBuilder: (_, _) => const SizedBox(height: 11),
@@ -614,8 +611,7 @@ class _CommentsSheetState extends State<_CommentsSheet> {
           ),
         ],
       ),
-    ),
-  );
+    );
 }
 
 class InboxPage extends StatelessWidget {
