@@ -58,8 +58,13 @@ class GamesPage extends StatelessWidget {
   const GamesPage({super.key});
   @override
   Widget build(BuildContext context) => SafeArea(
-    child: Column(
+    child: Stack(
       children: [
+        const Positioned.fill(
+          child: CustomPaint(painter: _GamesBackdropPainter()),
+        ),
+        Column(
+          children: [
         const Padding(
           padding: EdgeInsets.fromLTRB(16, 15, 16, 10),
           child: Align(
@@ -97,7 +102,7 @@ class GamesPage extends StatelessWidget {
                 ),
               ),
               Text(
-                '6 oyun · 2–4 oyuncu · tek tuş kontrolleri',
+                '6 oyun · 2–4 oyuncu · joystick kontrolleri',
                 style: TextStyle(color: Colors.white60),
               ),
             ],
@@ -175,9 +180,85 @@ class GamesPage extends StatelessWidget {
             },
           ),
         ),
+          ],
+        ),
       ],
     ),
   );
+}
+
+class _GamesBackdropPainter extends CustomPainter {
+  const _GamesBackdropPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final background = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xfffffbf1), Color(0xfffff3c8), Color(0xffe7f8f8)],
+        stops: [0, .55, 1],
+      ).createShader(Offset.zero & size);
+    canvas.drawRect(Offset.zero & size, background);
+
+    final waterWash = Paint()
+      ..color = _water.withValues(alpha: .13)
+      ..style = PaintingStyle.fill;
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(size.width * .91, size.height * .14),
+        width: 190,
+        height: 150,
+      ),
+      waterWash,
+    );
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: Offset(size.width * .08, size.height * .83),
+        width: 230,
+        height: 175,
+      ),
+      waterWash,
+    );
+
+    final ring = Paint()
+      ..color = _water.withValues(alpha: .22)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+    for (final radius in [24.0, 42.0, 61.0]) {
+      canvas.drawCircle(Offset(size.width * .88, size.height * .17), radius, ring);
+    }
+    for (final radius in [19.0, 35.0, 52.0]) {
+      canvas.drawCircle(Offset(size.width * .13, size.height * .8), radius, ring);
+    }
+
+    final crease = Paint()
+      ..color = _ink.withValues(alpha: .045)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+    final folds = [
+      [Offset(0, size.height * .28), Offset(size.width, size.height * .2)],
+      [Offset(size.width * .18, 0), Offset(size.width * .34, size.height)],
+      [Offset(size.width, size.height * .62), Offset(0, size.height * .7)],
+    ];
+    for (final fold in folds) {
+      canvas.drawLine(fold.first, fold.last, crease);
+    }
+
+    final drops = Paint()..color = _water.withValues(alpha: .38);
+    for (final point in [
+      Offset(size.width * .07, size.height * .18),
+      Offset(size.width * .94, size.height * .49),
+      Offset(size.width * .83, size.height * .76),
+      Offset(size.width * .18, size.height * .57),
+    ]) {
+      canvas.drawCircle(point, 5, drops);
+      canvas.drawCircle(point + const Offset(8, 9), 2.5, drops);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class QuickGame extends StatefulWidget {
