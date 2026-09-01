@@ -444,7 +444,9 @@ class _CommentsSheetState extends State<_CommentsSheet> {
   }
 
   @override
-  Widget build(BuildContext context) => Container(
+  Widget build(BuildContext context) => Padding(
+    padding: EdgeInsets.zero,
+    child: Container(
       decoration: const BoxDecoration(
         color: paper,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
