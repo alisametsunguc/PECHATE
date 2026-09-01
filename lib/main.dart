@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import 'features/inbox_page.dart' as inbox_feature;
 import 'features/games_page.dart' as games_feature;
@@ -1002,6 +1004,45 @@ class _ProfilePageState extends State<ProfilePage> {
   String handle = '@alisametsunguc';
   String bio = 'Kahveyi soğumadan, mesajı cevapsız bırakmadan severim.';
   String mood = 'Keyfim damla damla';
+  final ImagePicker picker = ImagePicker();
+  Uint8List? avatarBytes;
+  final List<_ProfileMedia> media = [];
+
+  Future<void> pickAvatar() async {
+    final file = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 82,
+      maxWidth: 1200,
+    );
+    if (file == null) return;
+    final bytes = await file.readAsBytes();
+    if (mounted) setState(() => avatarBytes = bytes);
+  }
+
+  Future<void> addPhotos() async {
+    final files = await picker.pickMultiImage(
+      imageQuality: 82,
+      maxWidth: 1600,
+      limit: 8,
+    );
+    if (files.isEmpty) return;
+    final additions = <_ProfileMedia>[];
+    for (final file in files) {
+      additions.add(
+        _ProfileMedia(name: file.name, bytes: await file.readAsBytes()),
+      );
+    }
+    if (mounted) setState(() => media.addAll(additions));
+  }
+
+  Future<void> addVideo() async {
+    final file = await picker.pickVideo(
+      source: ImageSource.gallery,
+      maxDuration: const Duration(minutes: 2),
+    );
+    if (file == null || !mounted) return;
+    setState(() => media.add(_ProfileMedia(name: file.name, isVideo: true)));
+  }
 
   void editProfile() {
     final nameController = TextEditingController(text: name);
@@ -1133,44 +1174,56 @@ class _ProfilePageState extends State<ProfilePage> {
                     children: [
                       Row(
                         children: [
-                          Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              Container(
-                                width: 92,
-                                height: 106,
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                  color: water,
-                                  border: Border.all(color: ink, width: 3),
-                                  borderRadius: const BorderRadius.only(
-                                    topLeft: Radius.circular(48),
-                                    topRight: Radius.circular(48),
-                                    bottomLeft: Radius.circular(48),
-                                    bottomRight: Radius.circular(13),
+                          GestureDetector(
+                            onTap: pickAvatar,
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                Container(
+                                  width: 92,
+                                  height: 106,
+                                  alignment: Alignment.center,
+                                  clipBehavior: Clip.antiAlias,
+                                  decoration: BoxDecoration(
+                                    color: water,
+                                    border: Border.all(color: ink, width: 3),
+                                    borderRadius: const BorderRadius.only(
+                                      topLeft: Radius.circular(48),
+                                      topRight: Radius.circular(48),
+                                      bottomLeft: Radius.circular(48),
+                                      bottomRight: Radius.circular(13),
+                                    ),
+                                  ),
+                                  child: avatarBytes == null
+                                      ? Text(
+                                          name.characters.first.toUpperCase(),
+                                          style: const TextStyle(
+                                            fontSize: 43,
+                                            fontWeight: FontWeight.w900,
+                                          ),
+                                        )
+                                      : Image.memory(
+                                          avatarBytes!,
+                                          width: 92,
+                                          height: 106,
+                                          fit: BoxFit.cover,
+                                        ),
+                                ),
+                                const Positioned(
+                                  right: -8,
+                                  bottom: -7,
+                                  child: CircleAvatar(
+                                    radius: 17,
+                                    backgroundColor: yellow,
+                                    child: Icon(
+                                      Icons.add_a_photo_rounded,
+                                      color: ink,
+                                      size: 18,
+                                    ),
                                   ),
                                 ),
-                                child: Text(
-                                  name.characters.first.toUpperCase(),
-                                  style: const TextStyle(
-                                    fontSize: 43,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                                ),
-                              ),
-                              const Positioned(
-                                right: -8,
-                                bottom: -7,
-                                child: CircleAvatar(
-                                  radius: 16,
-                                  backgroundColor: yellow,
-                                  child: Text(
-                                    '👋',
-                                    style: TextStyle(fontSize: 17),
-                                  ),
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                           const SizedBox(width: 17),
                           Expanded(
@@ -1232,6 +1285,77 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                 ),
               ),
+              const SizedBox(height: 28),
+              Row(
+                children: [
+                  const Expanded(
+                    child: _ProfileTitle(
+                      title: 'Benden kareler',
+                      subtitle: 'Fotoğraf olur, video olur; vesikalık şart değil.',
+                    ),
+                  ),
+                  IconButton.outlined(
+                    tooltip: 'Fotoğraf ekle',
+                    onPressed: addPhotos,
+                    style: IconButton.styleFrom(
+                      foregroundColor: ink,
+                      side: const BorderSide(color: ink, width: 2),
+                    ),
+                    icon: const Icon(Icons.add_photo_alternate_rounded),
+                  ),
+                  const SizedBox(width: 6),
+                  IconButton.filled(
+                    tooltip: 'Video ekle',
+                    onPressed: addVideo,
+                    style: IconButton.styleFrom(
+                      backgroundColor: water,
+                      foregroundColor: ink,
+                      side: const BorderSide(color: ink, width: 2),
+                    ),
+                    icon: const Icon(Icons.video_call_rounded),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              if (media.isEmpty)
+                GestureDetector(
+                  onTap: addPhotos,
+                  child: Container(
+                    height: 145,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: water.withValues(alpha: .12),
+                      border: Border.all(color: ink, width: 2),
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: const Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.collections_rounded, size: 37),
+                        SizedBox(height: 6),
+                        Text(
+                          'Henüz bir şey yok. Gizemli ama biraz fazla gizemli.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                        Text('Dokun ve ilk fotoğrafını ekle.'),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                SizedBox(
+                  height: 190,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: media.length,
+                    separatorBuilder: (_, _) => const SizedBox(width: 10),
+                    itemBuilder: (_, index) => _ProfileMediaCard(
+                      item: media[index],
+                      onRemove: () => setState(() => media.removeAt(index)),
+                    ),
+                  ),
+                ),
               const SizedBox(height: 28),
               const _ProfileTitle(
                 title: 'Bugün nasılız?',
@@ -1437,6 +1561,89 @@ class _Badge extends StatelessWidget {
     child: Text(
       '$emoji  $text',
       style: const TextStyle(fontWeight: FontWeight.w800),
+    ),
+  );
+}
+
+class _ProfileMedia {
+  final String name;
+  final Uint8List? bytes;
+  final bool isVideo;
+
+  const _ProfileMedia({
+    required this.name,
+    this.bytes,
+    this.isVideo = false,
+  });
+}
+
+class _ProfileMediaCard extends StatelessWidget {
+  final _ProfileMedia item;
+  final VoidCallback onRemove;
+
+  const _ProfileMediaCard({required this.item, required this.onRemove});
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: 145,
+    child: Stack(
+      children: [
+        Positioned.fill(
+          child: Container(
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              color: item.isVideo ? ink : Colors.white,
+              border: Border.all(color: ink, width: 3),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: item.isVideo
+                ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const CircleAvatar(
+                        radius: 27,
+                        backgroundColor: water,
+                        child: Icon(Icons.play_arrow_rounded, color: ink, size: 36),
+                      ),
+                      const SizedBox(height: 9),
+                      const Text(
+                        'VİDEO',
+                        style: TextStyle(
+                          color: paper,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Text(
+                          item.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: Colors.white60, fontSize: 10),
+                        ),
+                      ),
+                    ],
+                  )
+                : Image.memory(item.bytes!, fit: BoxFit.cover),
+          ),
+        ),
+        Positioned(
+          top: 7,
+          right: 7,
+          child: IconButton.filled(
+            onPressed: onRemove,
+            style: IconButton.styleFrom(
+              backgroundColor: paper,
+              foregroundColor: ink,
+              minimumSize: const Size(31, 31),
+              padding: EdgeInsets.zero,
+              side: const BorderSide(color: ink, width: 2),
+            ),
+            icon: const Icon(Icons.close_rounded, size: 18),
+          ),
+        ),
+      ],
     ),
   );
 }
