@@ -1007,6 +1007,56 @@ class _ProfilePageState extends State<ProfilePage> {
   final ImagePicker picker = ImagePicker();
   Uint8List? avatarBytes;
   final List<_ProfileMedia> media = [];
+  late List<String> firstMessages;
+  int selectedMessage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    firstMessages = buildFirstMessages();
+  }
+
+  List<String> buildFirstMessages() {
+    final options = <String>[
+      'Kahve konusunda bu kadar iddialıysan siparişimi sana bırakıyorum ☕',
+      'Kötü espri yarışı yapalım mı? Kaybeden daha kötüsünü anlatır.',
+      'Sosyal pilin düşükse tek emojilik sohbetle başlayabiliriz 🔋',
+      'Podcast uzunluğundaki sesli mesajının konusu ne olurdu? 🎙️',
+      'Beklenmedik iltifat hakkımı şimdi mi kullanayım, sonra mı?',
+      'Makarna bilgesi rozetini hangi tarifle kazandın? 🍝',
+      'Gece kuşuysan en iyi sohbet saatini tahmin edeyim: 01.17?',
+      'Profilindeki en doğru ve en abartılı cümleyi söyle.',
+      'Birlikte beş dakikada saçma bir hikâye yazsak ilk cümlen ne olurdu?',
+      '${name.split(' ').first}, bugün keyfini bir film adıyla anlatsan hangisi olurdu?',
+    ];
+    if (mood == 'Sosyal pil %3') {
+      options.insert(0, 'Konuşmak zorunda değiliz; bana sadece bugünün emojisini at 🪫');
+    } else if (mood == 'Kahveyle konuşurum') {
+      options.insert(0, 'İlk sorum ciddi: kahve mi seni seçti, sen mi kahveyi?');
+    } else if (mood == 'Gülmeye geldim') {
+      options.insert(0, 'Seni güldürmek için bir deneme hakkım var mı? 🤡');
+    }
+    options.shuffle(Random());
+    return options.take(3).toList();
+  }
+
+  void refreshFirstMessages() {
+    setState(() {
+      firstMessages = buildFirstMessages();
+      selectedMessage = 0;
+    });
+  }
+
+  void sendFirstMessage() {
+    final message = firstMessages[selectedMessage];
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: ink,
+        content: Text('$name’e gönderildi: “$message”'),
+        action: SnackBarAction(label: 'GERİ AL', textColor: yellow, onPressed: () {}),
+      ),
+    );
+  }
 
   Future<void> pickAvatar() async {
     final file = await picker.pickImage(
@@ -1094,6 +1144,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   bio = bioController.text.trim().isEmpty
                       ? bio
                       : bioController.text.trim();
+                  firstMessages = buildFirstMessages();
+                  selectedMessage = 0;
                 });
                 Navigator.pop(sheetContext);
               },
@@ -1382,7 +1434,13 @@ class _ProfilePageState extends State<ProfilePage> {
                             labelStyle: const TextStyle(
                               fontWeight: FontWeight.w800,
                             ),
-                            onSelected: (_) => setState(() => mood = item),
+                            onSelected: (_) {
+                              setState(() {
+                                mood = item;
+                                firstMessages = buildFirstMessages();
+                                selectedMessage = 0;
+                              });
+                            },
                           ),
                         )
                         .toList(),
@@ -1456,17 +1514,91 @@ class _ProfilePageState extends State<ProfilePage> {
                   border: Border.all(color: ink, width: 3),
                   borderRadius: BorderRadius.circular(18),
                 ),
-                child: const Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('💬', style: TextStyle(fontSize: 32)),
-                    SizedBox(width: 13),
-                    Expanded(
-                      child: Text(
-                        'Bana “Bir penguen bara girerse ne ister?” diye sor. Cevabım hazır değil ama paniğim hazır.',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          height: 1.25,
+                    Row(
+                      children: [
+                        const Text('💬', style: TextStyle(fontSize: 31)),
+                        const SizedBox(width: 10),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'İLK DAMLA',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 2.4,
+                                ),
+                              ),
+                              Text(
+                                'Ne yazacağını düşünme, birini seç.',
+                                style: TextStyle(fontWeight: FontWeight.w900),
+                              ),
+                            ],
+                          ),
                         ),
+                        IconButton(
+                          tooltip: 'Yeni mesajlar getir',
+                          onPressed: refreshFirstMessages,
+                          icon: const Icon(Icons.refresh_rounded),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 11),
+                    ...List.generate(
+                      firstMessages.length,
+                      (index) => GestureDetector(
+                        onTap: () => setState(() => selectedMessage = index),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 160),
+                          width: double.infinity,
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.all(11),
+                          decoration: BoxDecoration(
+                            color: selectedMessage == index ? paper : Colors.white54,
+                            border: Border.all(
+                              color: ink,
+                              width: selectedMessage == index ? 3 : 1.5,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  firstMessages[index],
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                    height: 1.22,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Icon(
+                                selectedMessage == index
+                                    ? Icons.radio_button_checked
+                                    : Icons.radio_button_off,
+                                size: 20,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: sendFirstMessage,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: ink,
+                          foregroundColor: paper,
+                        ),
+                        icon: const Icon(Icons.water_drop_rounded, size: 18),
+                        label: Text('$name’E GÖNDER'),
                       ),
                     ),
                   ],
