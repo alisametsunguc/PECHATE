@@ -691,6 +691,104 @@ class _ArenaBullet {
   });
 }
 
+class _PlayerJoystick extends StatefulWidget {
+  final int player;
+  final Color color;
+  final ValueChanged<Offset> onMove;
+  final VoidCallback onAction;
+  final String action;
+
+  const _PlayerJoystick({
+    required this.player,
+    required this.color,
+    required this.onMove,
+    required this.onAction,
+    required this.action,
+  });
+
+  @override
+  State<_PlayerJoystick> createState() => _PlayerJoystickState();
+}
+
+class _PlayerJoystickState extends State<_PlayerJoystick> {
+  Offset knob = Offset.zero;
+
+  void move(Offset local) {
+    final vector = local - const Offset(42, 42);
+    final limited = vector.distance > 25
+        ? Offset.fromDirection(vector.direction, 25)
+        : vector;
+    setState(() => knob = limited);
+    if (vector.distance > 7) widget.onMove(vector / max(vector.distance, 1));
+  }
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('P${widget.player + 1}', style: const TextStyle(fontWeight: FontWeight.w900)),
+          GestureDetector(
+            onPanStart: (d) => move(d.localPosition),
+            onPanUpdate: (d) => move(d.localPosition),
+            onPanEnd: (_) => setState(() => knob = Offset.zero),
+            onPanCancel: () => setState(() => knob = Offset.zero),
+            child: Container(
+              width: 84,
+              height: 84,
+              decoration: BoxDecoration(
+                color: widget.color.withValues(alpha: .28),
+                shape: BoxShape.circle,
+                border: Border.all(color: _ink, width: 3),
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  const Icon(Icons.add, size: 55, color: Colors.black26),
+                  Transform.translate(
+                    offset: knob,
+                    child: Container(
+                      width: 35,
+                      height: 35,
+                      decoration: BoxDecoration(
+                        color: widget.color,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: _ink, width: 3),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+      const SizedBox(width: 7),
+      GestureDetector(
+        onTap: widget.onAction,
+        child: Container(
+          width: 55,
+          height: 55,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: widget.color,
+            shape: BoxShape.circle,
+            border: Border.all(color: _ink, width: 3),
+            boxShadow: const [BoxShadow(color: Colors.black26, offset: Offset(0, 3))],
+          ),
+          child: Text(
+            widget.action,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900),
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
 class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
   int players = 0;
   List<int> score = [];
@@ -701,6 +799,7 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
   List<double> tankAngles = [];
   List<Offset> tankPositions = [];
   List<_ArenaBullet> bullets = [];
+  List<int> lastMoveAt = [];
   int target = -1, memoryStep = 0;
   List<int> sequence = [];
   bool go = false, finished = false;
@@ -725,6 +824,7 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
       tankAngles = List.generate(players, (i) => i * pi);
       tankPositions = _startingPositions(players);
       bullets = [];
+      lastMoveAt = List.filled(players, 0);
       target = -1;
       memoryStep = 0;
       sequence = [];
@@ -776,9 +876,6 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
   void _startShoot() {
     timer = Timer.periodic(const Duration(milliseconds: 30), (_) {
       if (!mounted || finished) return;
-      for (var i = 0; i < players; i++) {
-        tankAngles[i] += i.isEven ? .035 : -.035;
-      }
       final removed = <_ArenaBullet>[];
       for (final bullet in bullets) {
         bullet.x += bullet.dx;
@@ -967,6 +1064,42 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
     setState(() {});
   }
 
+  void movePlayer(int i, Offset direction) {
+    if (finished || i >= players) return;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (now - lastMoveAt[i] < 45) return;
+    lastMoveAt[i] = now;
+    switch (widget.game.id) {
+      case 'shoot':
+        if (lives[i] == 0) return;
+        tankAngles[i] = direction.direction;
+        tankPositions[i] = Offset(
+          (tankPositions[i].dx + direction.dx * .035).clamp(.07, .93).toDouble(),
+          (tankPositions[i].dy + direction.dy * .035).clamp(.07, .93).toDouble(),
+        );
+        break;
+      case 'race':
+        if (direction.dx > .25 || direction.dy < -.25) press(i);
+        return;
+      case 'dodge':
+        if (direction.dy.abs() > .55) {
+          lanes[i] = (lanes[i] + (direction.dy > 0 ? 1 : -1))
+              .clamp(0, 2)
+              .toInt();
+        }
+        break;
+      case 'sumo':
+        tankPositions[i] = Offset(
+          (tankPositions[i].dx + direction.dx * .04).clamp(.08, .92).toDouble(),
+          (tankPositions[i].dy + direction.dy * .04).clamp(.08, .92).toDouble(),
+        );
+        break;
+      default:
+        tankAngles[i] = direction.direction;
+    }
+    setState(() {});
+  }
+
   void _win(int i, {String? message}) {
     if (finished) return;
     finished = true;
@@ -1084,33 +1217,26 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
           ),
           Text(_hint(), style: const TextStyle(fontWeight: FontWeight.w900)),
           const SizedBox(height: 9),
-          GridView.count(
-            shrinkWrap: true,
-            crossAxisCount: 2,
-            childAspectRatio: 2.15,
-            children: List.generate(
-              players,
-              (i) => Padding(
-                padding: const EdgeInsets.all(4),
-                child: FilledButton(
-                  onPressed: () => press(i),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: [
-                      const Color(0xffff6b67),
-                      _water,
-                      const Color(0xff8bd669),
-                      const Color(0xffad8ced),
-                    ][i],
-                    foregroundColor: _ink,
-                    side: const BorderSide(color: _ink, width: 3),
-                  ),
-                  child: Text(
-                    'P${i + 1} · ${_button()}',
-                    style: const TextStyle(fontWeight: FontWeight.w900),
-                  ),
-                ),
-              ),
-            ),
+          Wrap(
+            alignment: WrapAlignment.spaceEvenly,
+            runAlignment: WrapAlignment.center,
+            spacing: 10,
+            runSpacing: 8,
+            children: List.generate(players, (i) {
+              final color = [
+                const Color(0xffff6b67),
+                _water,
+                const Color(0xff8bd669),
+                const Color(0xffad8ced),
+              ][i];
+              return _PlayerJoystick(
+                player: i,
+                color: color,
+                onMove: (direction) => movePlayer(i, direction),
+                onAction: () => press(i),
+                action: _button(),
+              );
+            }),
           ),
         ],
       ),
@@ -1206,8 +1332,9 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
         ),
       ),
     ),
-    'sumo' => Stack(
-      children: [
+    'sumo' => LayoutBuilder(
+      builder: (_, bounds) => Stack(
+        children: [
         Center(
           child: Container(
             width: 250,
@@ -1218,16 +1345,17 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
             ),
           ),
         ),
-        ...List.generate(
+          ...List.generate(
           players,
           (i) => AnimatedPositioned(
             duration: const Duration(milliseconds: 180),
-            left: 70 + (i % 2) * 130 + progress[i] * 30,
-            top: 70 + (i ~/ 2) * 125 + progress[i] * 35,
+            left: tankPositions[i].dx * bounds.maxWidth - 22,
+            top: tankPositions[i].dy * bounds.maxHeight - 22,
             child: Text('${i + 1}🟠', style: const TextStyle(fontSize: 31)),
           ),
         ),
-      ],
+        ],
+      ),
     ),
     'dodge' => Stack(
       children: [
@@ -1377,11 +1505,11 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
     _ => 'KAP!',
   };
   String _hint() => switch (widget.game.id) {
-    'shoot' => 'Nişan dönerken ateş et. Son hayatta kalan kazanır.',
-    'race' => 'Bitiş çizgisine ulaşmak için hızlı dokun.',
+    'shoot' => 'Joystick ile hareket edip nişan al, ATEŞ ile rakibini vur.',
+    'race' => 'Joystick’i ileri iterek bitiş çizgisine ilk sen ulaş.',
     'catch' => 'Yıldız görününce ilk sen yakala.',
     'sumo' => 'Rakibini çemberin dışına it.',
-    'dodge' => 'Tehlikeli şeritten kaç ve platformda kal.',
+    'dodge' => 'Joystick’i yukarı-aşağı itip tehlikeli şeritten kaç.',
     'target' => 'Pompa çıkınca ilk sen bas.',
     'memory' => 'Lekelerin sırasını hatırla.',
     'panic' => 'Yeşil olmadan sakın basma.',
