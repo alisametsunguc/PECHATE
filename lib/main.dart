@@ -317,6 +317,29 @@ class PostCard extends StatefulWidget {
 
 class _PostCardState extends State<PostCard> {
   bool reacted = false;
+  final List<_FeedComment> comments = [
+    const _FeedComment('Ece', 'Burası tam kaybolup geri gelmelikmiş.', '🌊'),
+    const _FeedComment('Kerem', 'Konum at, pusulayı ben getiririm.', '🧭'),
+    const _FeedComment('Duru', 'Fotoğrafın sesi olsa lo-fi çalardı.', '🎧'),
+  ];
+
+  void openComments() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _CommentsSheet(
+        postOwner: widget.index.isEven ? 'Maya' : 'Alex',
+        comments: comments,
+        totalCount: 31 + comments.length - 3,
+        onAdded: (comment) {
+          setState(() => comments.add(comment));
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) => Card(
     margin: const EdgeInsets.fromLTRB(14, 4, 14, 14),
@@ -367,13 +390,230 @@ class _PostCardState extends State<PostCard> {
               label: Text(reacted ? '249 drops' : '248 drops'),
             ),
             TextButton.icon(
-              onPressed: () {},
+              onPressed: openComments,
               icon: const Icon(Icons.comment_outlined),
-              label: const Text('31'),
+              label: Text('${31 + comments.length - 3}'),
             ),
           ],
         ),
       ],
+    ),
+  );
+}
+
+class _FeedComment {
+  final String name, text, emoji;
+  const _FeedComment(this.name, this.text, this.emoji);
+}
+
+class _CommentsSheet extends StatefulWidget {
+  final String postOwner;
+  final List<_FeedComment> comments;
+  final int totalCount;
+  final ValueChanged<_FeedComment> onAdded;
+
+  const _CommentsSheet({
+    required this.postOwner,
+    required this.comments,
+    required this.totalCount,
+    required this.onAdded,
+  });
+
+  @override
+  State<_CommentsSheet> createState() => _CommentsSheetState();
+}
+
+class _CommentsSheetState extends State<_CommentsSheet> {
+  final controller = TextEditingController();
+
+  void sendComment() {
+    final text = controller.text.trim();
+    if (text.isEmpty) return;
+    widget.onAdded(_FeedComment('Sen', text, '💧'));
+    controller.clear();
+    setState(() {});
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => DraggableScrollableSheet(
+    initialChildSize: .74,
+    minChildSize: .45,
+    maxChildSize: .94,
+    expand: false,
+    builder: (_, scrollController) => Container(
+      decoration: const BoxDecoration(
+        color: paper,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        border: Border(top: BorderSide(color: ink, width: 3)),
+      ),
+      child: Column(
+        children: [
+          const SizedBox(height: 10),
+          Container(
+            width: 52,
+            height: 5,
+            decoration: BoxDecoration(
+              color: ink,
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 13, 10, 11),
+            child: Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: yellow,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: ink, width: 2),
+                  ),
+                  child: const Text('💬', style: TextStyle(fontSize: 20)),
+                ),
+                const SizedBox(width: 11),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'YORUMLAR',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 2.2,
+                        ),
+                      ),
+                      Text(
+                        '${widget.postOwner}’nın gönderisine ${widget.totalCount} damla',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close_rounded),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1, color: ink, thickness: 2),
+          Expanded(
+            child: ListView.separated(
+              controller: scrollController,
+              padding: const EdgeInsets.fromLTRB(16, 15, 16, 20),
+              itemCount: widget.comments.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 11),
+              itemBuilder: (_, index) {
+                final comment = widget.comments[index];
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 39,
+                      height: 39,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: index.isEven ? water : yellow,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: ink, width: 2),
+                      ),
+                      child: Text(comment.emoji),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: Border.all(color: ink, width: 1.5),
+                          borderRadius: const BorderRadius.only(
+                            topRight: Radius.circular(16),
+                            bottomLeft: Radius.circular(16),
+                            bottomRight: Radius.circular(16),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              comment.name,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(comment.text),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+          AnimatedPadding(
+            duration: const Duration(milliseconds: 160),
+            padding: EdgeInsets.fromLTRB(
+              14,
+              10,
+              14,
+              MediaQuery.viewInsetsOf(context).bottom + 12,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: controller,
+                    textInputAction: TextInputAction.send,
+                    onSubmitted: (_) => sendComment(),
+                    decoration: InputDecoration(
+                      hintText: 'Bir damla yorum bırak...',
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 13,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(22),
+                        borderSide: const BorderSide(color: ink, width: 2),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(22),
+                        borderSide: const BorderSide(color: ink, width: 2),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton.filled(
+                  onPressed: sendComment,
+                  style: IconButton.styleFrom(
+                    backgroundColor: water,
+                    foregroundColor: ink,
+                    side: const BorderSide(color: ink, width: 2),
+                  ),
+                  icon: const Icon(Icons.water_drop_rounded),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     ),
   );
 }
