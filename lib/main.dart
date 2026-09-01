@@ -1164,7 +1164,10 @@ class _ProfilePageState extends State<ProfilePage> {
                                 child: CircleAvatar(
                                   radius: 16,
                                   backgroundColor: yellow,
-                                  child: Text('👋', style: TextStyle(fontSize: 17)),
+                                  child: Text(
+                                    '👋',
+                                    style: TextStyle(fontSize: 17),
+                                  ),
                                 ),
                               ),
                             ],
@@ -1238,19 +1241,26 @@ class _ProfilePageState extends State<ProfilePage> {
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: [
-                  'Keyfim damla damla',
-                  'Sosyal pil %3',
-                  'Kahveyle konuşurum',
-                  'Gülmeye geldim',
-                ].map((item) => ChoiceChip(
-                  label: Text(item),
-                  selected: mood == item,
-                  selectedColor: water,
-                  side: const BorderSide(color: ink, width: 2),
-                  labelStyle: const TextStyle(fontWeight: FontWeight.w800),
-                  onSelected: (_) => setState(() => mood = item),
-                )).toList(),
+                children:
+                    [
+                          'Keyfim damla damla',
+                          'Sosyal pil %3',
+                          'Kahveyle konuşurum',
+                          'Gülmeye geldim',
+                        ]
+                        .map(
+                          (item) => ChoiceChip(
+                            label: Text(item),
+                            selected: mood == item,
+                            selectedColor: water,
+                            side: const BorderSide(color: ink, width: 2),
+                            labelStyle: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                            ),
+                            onSelected: (_) => setState(() => mood = item),
+                          ),
+                        )
+                        .toList(),
               ),
               const SizedBox(height: 27),
               const _ProfileTitle(
@@ -1260,17 +1270,41 @@ class _ProfilePageState extends State<ProfilePage> {
               const SizedBox(height: 11),
               const Row(
                 children: [
-                  Expanded(child: _TraitCard(emoji: '🎙️', title: 'Sesli mesaj', text: '1:32’yi geçince podcast olur.')),
+                  Expanded(
+                    child: _TraitCard(
+                      emoji: '🎙️',
+                      title: 'Sesli mesaj',
+                      text: '1:32’yi geçince podcast olur.',
+                    ),
+                  ),
                   SizedBox(width: 10),
-                  Expanded(child: _TraitCard(emoji: '👻', title: 'Kaybolma hızı', text: 'Mesai saatinde biraz gizemli.')),
+                  Expanded(
+                    child: _TraitCard(
+                      emoji: '👻',
+                      title: 'Kaybolma hızı',
+                      text: 'Mesai saatinde biraz gizemli.',
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 10),
               const Row(
                 children: [
-                  Expanded(child: _TraitCard(emoji: '🤡', title: 'Mizah seviyesi', text: 'Kötü espriye bile emek verir.')),
+                  Expanded(
+                    child: _TraitCard(
+                      emoji: '🤡',
+                      title: 'Mizah seviyesi',
+                      text: 'Kötü espriye bile emek verir.',
+                    ),
+                  ),
                   SizedBox(width: 10),
-                  Expanded(child: _TraitCard(emoji: '☕', title: 'Yakıt türü', text: 'Kahve ve beklenmedik iltifat.')),
+                  Expanded(
+                    child: _TraitCard(
+                      emoji: '☕',
+                      title: 'Yakıt türü',
+                      text: 'Kahve ve beklenmedik iltifat.',
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 27),
@@ -1304,7 +1338,10 @@ class _ProfilePageState extends State<ProfilePage> {
                     Expanded(
                       child: Text(
                         'Bana “Bir penguen bara girerse ne ister?” diye sor. Cevabım hazır değil ama paniğim hazır.',
-                        style: TextStyle(fontWeight: FontWeight.w900, height: 1.25),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          height: 1.25,
+                        ),
                       ),
                     ),
                   ],
@@ -1325,8 +1362,14 @@ class _ProfileStat extends StatelessWidget {
   Widget build(BuildContext context) => Expanded(
     child: Column(
       children: [
-        Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
-        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+        ),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+        ),
       ],
     ),
   );
@@ -1339,15 +1382,25 @@ class _ProfileTitle extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(title, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w900)),
-      Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.black54)),
+      Text(
+        title,
+        style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w900),
+      ),
+      Text(
+        subtitle,
+        style: const TextStyle(fontSize: 12, color: Colors.black54),
+      ),
     ],
   );
 }
 
 class _TraitCard extends StatelessWidget {
   final String emoji, title, text;
-  const _TraitCard({required this.emoji, required this.title, required this.text});
+  const _TraitCard({
+    required this.emoji,
+    required this.title,
+    required this.text,
+  });
   @override
   Widget build(BuildContext context) => Container(
     constraints: const BoxConstraints(minHeight: 130),
@@ -1381,6 +1434,9 @@ class _Badge extends StatelessWidget {
       border: Border.all(color: ink, width: 2),
       borderRadius: BorderRadius.circular(30),
     ),
-    child: Text('$emoji  $text', style: const TextStyle(fontWeight: FontWeight.w800)),
+    child: Text(
+      '$emoji  $text',
+      style: const TextStyle(fontWeight: FontWeight.w800),
+    ),
   );
 }
