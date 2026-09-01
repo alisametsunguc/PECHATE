@@ -729,7 +729,10 @@ class _PlayerJoystickState extends State<_PlayerJoystick> {
       Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('P${widget.player + 1}', style: const TextStyle(fontWeight: FontWeight.w900)),
+          Text(
+            'P${widget.player + 1}',
+            style: const TextStyle(fontWeight: FontWeight.w900),
+          ),
           GestureDetector(
             onPanStart: (d) => move(d.localPosition),
             onPanUpdate: (d) => move(d.localPosition),
@@ -776,7 +779,9 @@ class _PlayerJoystickState extends State<_PlayerJoystick> {
             color: widget.color,
             shape: BoxShape.circle,
             border: Border.all(color: _ink, width: 3),
-            boxShadow: const [BoxShadow(color: Colors.black26, offset: Offset(0, 3))],
+            boxShadow: const [
+              BoxShadow(color: Colors.black26, offset: Offset(0, 3)),
+            ],
           ),
           child: Text(
             widget.action,
@@ -1074,8 +1079,12 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
         if (lives[i] == 0) return;
         tankAngles[i] = direction.direction;
         tankPositions[i] = Offset(
-          (tankPositions[i].dx + direction.dx * .035).clamp(.07, .93).toDouble(),
-          (tankPositions[i].dy + direction.dy * .035).clamp(.07, .93).toDouble(),
+          (tankPositions[i].dx + direction.dx * .035)
+              .clamp(.07, .93)
+              .toDouble(),
+          (tankPositions[i].dy + direction.dy * .035)
+              .clamp(.07, .93)
+              .toDouble(),
         );
         break;
       case 'race':
@@ -1335,25 +1344,25 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
     'sumo' => LayoutBuilder(
       builder: (_, bounds) => Stack(
         children: [
-        Center(
-          child: Container(
-            width: 250,
-            height: 250,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: _ink, width: 5),
+          Center(
+            child: Container(
+              width: 250,
+              height: 250,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: _ink, width: 5),
+              ),
             ),
           ),
-        ),
           ...List.generate(
-          players,
-          (i) => AnimatedPositioned(
-            duration: const Duration(milliseconds: 180),
-            left: tankPositions[i].dx * bounds.maxWidth - 22,
-            top: tankPositions[i].dy * bounds.maxHeight - 22,
-            child: Text('${i + 1}🟠', style: const TextStyle(fontSize: 31)),
+            players,
+            (i) => AnimatedPositioned(
+              duration: const Duration(milliseconds: 180),
+              left: tankPositions[i].dx * bounds.maxWidth - 22,
+              top: tankPositions[i].dy * bounds.maxHeight - 22,
+              child: Text('${i + 1}🟠', style: const TextStyle(fontSize: 31)),
+            ),
           ),
-        ),
         ],
       ),
     ),
