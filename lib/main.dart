@@ -318,9 +318,9 @@ class PostCard extends StatefulWidget {
 class _PostCardState extends State<PostCard> {
   bool reacted = false;
   final List<_FeedComment> comments = [
-    const _FeedComment('Ece', 'Burası tam kaybolup geri gelmelikmiş.', '🌊'),
-    const _FeedComment('Kerem', 'Konum at, pusulayı ben getiririm.', '🧭'),
-    const _FeedComment('Duru', 'Fotoğrafın sesi olsa lo-fi çalardı.', '🎧'),
+    _FeedComment('Ece', 'Burası tam kaybolup geri gelmelikmiş.', '🌊', likes: 12),
+    _FeedComment('Kerem', 'Konum at, pusulayı ben getiririm.', '🧭', likes: 7),
+    _FeedComment('Duru', 'Fotoğrafın sesi olsa lo-fi çalardı.', '🎧', likes: 19),
   ];
 
   void openComments() {
@@ -406,7 +406,26 @@ class _PostCardState extends State<PostCard> {
 
 class _FeedComment {
   final String name, text, emoji;
-  const _FeedComment(this.name, this.text, this.emoji);
+  int likes;
+  bool liked;
+  final List<_FeedReply> replies;
+
+  _FeedComment(
+    this.name,
+    this.text,
+    this.emoji, {
+    this.likes = 0,
+    this.liked = false,
+    List<_FeedReply>? replies,
+  }) : replies = replies ?? [];
+}
+
+class _FeedReply {
+  final String name, text;
+  int likes;
+  bool liked;
+
+  _FeedReply(this.name, this.text, {this.likes = 0, this.liked = false});
 }
 
 class _CommentsSheet extends StatefulWidget {
@@ -428,18 +447,30 @@ class _CommentsSheet extends StatefulWidget {
 
 class _CommentsSheetState extends State<_CommentsSheet> {
   final controller = TextEditingController();
+  final inputFocus = FocusNode();
+  int? replyingTo;
 
   void sendComment() {
     final text = controller.text.trim();
     if (text.isEmpty) return;
-    widget.onAdded(_FeedComment('Sen', text, '💧'));
+    if (replyingTo == null) {
+      widget.onAdded(_FeedComment('Sen', text, '💧'));
+    } else {
+      widget.comments[replyingTo!].replies.add(_FeedReply('Sen', text));
+    }
     controller.clear();
-    setState(() {});
+    setState(() => replyingTo = null);
+  }
+
+  void replyTo(int index) {
+    setState(() => replyingTo = index);
+    inputFocus.requestFocus();
   }
 
   @override
   void dispose() {
     controller.dispose();
+    inputFocus.dispose();
     super.dispose();
   }
 
@@ -555,6 +586,141 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                             ),
                             const SizedBox(height: 2),
                             Text(comment.text),
+                            const SizedBox(height: 7),
+                            Row(
+                              children: [
+                                InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      comment.liked = !comment.liked;
+                                      comment.likes += comment.liked ? 1 : -1;
+                                    });
+                                  },
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 5,
+                                      vertical: 3,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          comment.liked
+                                              ? Icons.favorite_rounded
+                                              : Icons.favorite_border_rounded,
+                                          size: 17,
+                                          color: comment.liked
+                                              ? const Color(0xffe54b4b)
+                                              : ink,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          '${comment.likes}',
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w900,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                TextButton(
+                                  onPressed: () => replyTo(index),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: ink,
+                                    visualDensity: VisualDensity.compact,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 7,
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'YANITLA',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (comment.replies.isNotEmpty) ...[
+                              const Divider(height: 14),
+                              ...List.generate(comment.replies.length, (replyIndex) {
+                                final reply = comment.replies[replyIndex];
+                                return Padding(
+                                  padding: const EdgeInsets.only(
+                                    left: 8,
+                                    top: 5,
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        '↳',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w900,
+                                          color: Colors.black38,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 7),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              reply.name,
+                                              style: const TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w900,
+                                              ),
+                                            ),
+                                            Text(
+                                              reply.text,
+                                              style: const TextStyle(fontSize: 12),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      InkWell(
+                                        onTap: () {
+                                          setState(() {
+                                            reply.liked = !reply.liked;
+                                            reply.likes += reply.liked ? 1 : -1;
+                                          });
+                                        },
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(5),
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                reply.liked
+                                                    ? Icons.favorite_rounded
+                                                    : Icons.favorite_border_rounded,
+                                                size: 15,
+                                                color: reply.liked
+                                                    ? const Color(0xffe54b4b)
+                                                    : ink,
+                                              ),
+                                              if (reply.likes > 0)
+                                                Text(
+                                                  '${reply.likes}',
+                                                  style: const TextStyle(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.w900,
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }),
+                            ],
                           ],
                         ),
                       ),
@@ -577,10 +743,23 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                 Expanded(
                   child: TextField(
                     controller: controller,
+                    focusNode: inputFocus,
                     textInputAction: TextInputAction.send,
                     onSubmitted: (_) => sendComment(),
                     decoration: InputDecoration(
-                      hintText: 'Bir damla yorum bırak...',
+                      hintText: replyingTo == null
+                          ? 'Bir damla yorum bırak...'
+                          : '${widget.comments[replyingTo!].name} kişisine yanıt...',
+                      prefixIcon: replyingTo == null
+                          ? null
+                          : const Icon(Icons.reply_rounded, size: 20),
+                      suffixIcon: replyingTo == null
+                          ? null
+                          : IconButton(
+                              tooltip: 'Yanıtlamayı iptal et',
+                              onPressed: () => setState(() => replyingTo = null),
+                              icon: const Icon(Icons.close_rounded, size: 18),
+                            ),
                       filled: true,
                       fillColor: Colors.white,
                       contentPadding: const EdgeInsets.symmetric(
