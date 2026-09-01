@@ -318,9 +318,19 @@ class PostCard extends StatefulWidget {
 class _PostCardState extends State<PostCard> {
   bool reacted = false;
   final List<_FeedComment> comments = [
-    _FeedComment('Ece', 'Burası tam kaybolup geri gelmelikmiş.', '🌊', likes: 12),
+    _FeedComment(
+      'Ece',
+      'Burası tam kaybolup geri gelmelikmiş.',
+      '🌊',
+      likes: 12,
+    ),
     _FeedComment('Kerem', 'Konum at, pusulayı ben getiririm.', '🧭', likes: 7),
-    _FeedComment('Duru', 'Fotoğrafın sesi olsa lo-fi çalardı.', '🎧', likes: 19),
+    _FeedComment(
+      'Duru',
+      'Fotoğrafın sesi olsa lo-fi çalardı.',
+      '🎧',
+      likes: 19,
+    ),
   ];
 
   void openComments() {
@@ -647,7 +657,9 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                             ),
                             if (comment.replies.isNotEmpty) ...[
                               const Divider(height: 14),
-                              ...List.generate(comment.replies.length, (replyIndex) {
+                              ...List.generate(comment.replies.length, (
+                                replyIndex,
+                              ) {
                                 final reply = comment.replies[replyIndex];
                                 return Padding(
                                   padding: const EdgeInsets.only(
@@ -655,7 +667,8 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                                     top: 5,
                                   ),
                                   child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       const Text(
                                         '↳',
@@ -679,7 +692,9 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                                             ),
                                             Text(
                                               reply.text,
-                                              style: const TextStyle(fontSize: 12),
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                              ),
                                             ),
                                           ],
                                         ),
@@ -698,7 +713,8 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                                               Icon(
                                                 reply.liked
                                                     ? Icons.favorite_rounded
-                                                    : Icons.favorite_border_rounded,
+                                                    : Icons
+                                                          .favorite_border_rounded,
                                                 size: 15,
                                                 color: reply.liked
                                                     ? const Color(0xffe54b4b)
@@ -757,7 +773,8 @@ class _CommentsSheetState extends State<_CommentsSheet> {
                           ? null
                           : IconButton(
                               tooltip: 'Yanıtlamayı iptal et',
-                              onPressed: () => setState(() => replyingTo = null),
+                              onPressed: () =>
+                                  setState(() => replyingTo = null),
                               icon: const Icon(Icons.close_rounded, size: 18),
                             ),
                       filled: true,
