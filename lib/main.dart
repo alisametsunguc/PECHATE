@@ -990,33 +990,397 @@ class _PartyGamePageState extends State<PartyGamePage> {
   );
 }
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
   @override
-  Widget build(BuildContext context) => const SafeArea(
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        CircleAvatar(
-          radius: 55,
-          backgroundColor: yellow,
-          child: Text(
-            'S',
-            style: TextStyle(fontSize: 42, fontWeight: FontWeight.w900),
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  String name = 'Samet';
+  String handle = '@alisametsunguc';
+  String bio = 'Kahveyi soğumadan, mesajı cevapsız bırakmadan severim.';
+  String mood = 'Keyfim damla damla';
+
+  void editProfile() {
+    final nameController = TextEditingController(text: name);
+    final bioController = TextEditingController(text: bio);
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: paper,
+      builder: (sheetContext) => Padding(
+        padding: EdgeInsets.fromLTRB(
+          20,
+          22,
+          20,
+          MediaQuery.viewInsetsOf(sheetContext).bottom + 24,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Kendini biraz cilala',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+            ),
+            const Text('Fazla parlatma, göz alıyor.'),
+            const SizedBox(height: 18),
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: 'İsim',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: bioController,
+              maxLines: 3,
+              maxLength: 110,
+              decoration: const InputDecoration(
+                labelText: 'Kısaca sen',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            FilledButton(
+              onPressed: () {
+                setState(() {
+                  name = nameController.text.trim().isEmpty
+                      ? name
+                      : nameController.text.trim();
+                  bio = bioController.text.trim().isEmpty
+                      ? bio
+                      : bioController.text.trim();
+                });
+                Navigator.pop(sheetContext);
+              },
+              style: FilledButton.styleFrom(
+                backgroundColor: ink,
+                foregroundColor: paper,
+              ),
+              child: const Text('OLDU BU'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) => SafeArea(
+    child: CustomScrollView(
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 30),
+          sliver: SliverList.list(
+            children: [
+              Row(
+                children: [
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'PROFİL',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 3,
+                          ),
+                        ),
+                        Text(
+                          'Ben, kendim ve Wi-Fi',
+                          style: TextStyle(
+                            fontSize: 25,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton.filled(
+                    onPressed: editProfile,
+                    style: IconButton.styleFrom(
+                      backgroundColor: yellow,
+                      foregroundColor: ink,
+                      side: const BorderSide(color: ink, width: 2),
+                    ),
+                    icon: const Icon(Icons.edit_note_rounded),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              Transform.rotate(
+                angle: -.018,
+                child: Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(color: ink, width: 3),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(7),
+                      topRight: Radius.circular(24),
+                      bottomLeft: Radius.circular(21),
+                      bottomRight: Radius.circular(9),
+                    ),
+                    boxShadow: const [
+                      BoxShadow(color: ink, offset: Offset(5, 6)),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Container(
+                                width: 92,
+                                height: 106,
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: water,
+                                  border: Border.all(color: ink, width: 3),
+                                  borderRadius: const BorderRadius.only(
+                                    topLeft: Radius.circular(48),
+                                    topRight: Radius.circular(48),
+                                    bottomLeft: Radius.circular(48),
+                                    bottomRight: Radius.circular(13),
+                                  ),
+                                ),
+                                child: Text(
+                                  name.characters.first.toUpperCase(),
+                                  style: const TextStyle(
+                                    fontSize: 43,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ),
+                              const Positioned(
+                                right: -8,
+                                bottom: -7,
+                                child: CircleAvatar(
+                                  radius: 16,
+                                  backgroundColor: yellow,
+                                  child: Text('👋', style: TextStyle(fontSize: 17)),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(width: 17),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  name,
+                                  style: const TextStyle(
+                                    fontSize: 27,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                                Text('$handle · İstanbul'),
+                                const SizedBox(height: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 9,
+                                    vertical: 5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: yellow.withValues(alpha: .28),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    '💧 $mood',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          bio,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            height: 1.35,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 17),
+                      const Row(
+                        children: [
+                          _ProfileStat(value: '248', label: 'Damla'),
+                          _ProfileStat(value: '15', label: 'Sızıntı'),
+                          _ProfileStat(value: '42', label: 'Muhabbet'),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 28),
+              const _ProfileTitle(
+                title: 'Bugün nasılız?',
+                subtitle: 'Dürüst ol, algoritma yargılamıyor. Şimdilik.',
+              ),
+              const SizedBox(height: 11),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  'Keyfim damla damla',
+                  'Sosyal pil %3',
+                  'Kahveyle konuşurum',
+                  'Gülmeye geldim',
+                ].map((item) => ChoiceChip(
+                  label: Text(item),
+                  selected: mood == item,
+                  selectedColor: water,
+                  side: const BorderSide(color: ink, width: 2),
+                  labelStyle: const TextStyle(fontWeight: FontWeight.w800),
+                  onSelected: (_) => setState(() => mood = item),
+                )).toList(),
+              ),
+              const SizedBox(height: 27),
+              const _ProfileTitle(
+                title: 'Kullanım kılavuzum',
+                subtitle: 'Yan etkiler arasında ani kahkaha bulunabilir.',
+              ),
+              const SizedBox(height: 11),
+              const Row(
+                children: [
+                  Expanded(child: _TraitCard(emoji: '🎙️', title: 'Sesli mesaj', text: '1:32’yi geçince podcast olur.')),
+                  SizedBox(width: 10),
+                  Expanded(child: _TraitCard(emoji: '👻', title: 'Kaybolma hızı', text: 'Mesai saatinde biraz gizemli.')),
+                ],
+              ),
+              const SizedBox(height: 10),
+              const Row(
+                children: [
+                  Expanded(child: _TraitCard(emoji: '🤡', title: 'Mizah seviyesi', text: 'Kötü espriye bile emek verir.')),
+                  SizedBox(width: 10),
+                  Expanded(child: _TraitCard(emoji: '☕', title: 'Yakıt türü', text: 'Kahve ve beklenmedik iltifat.')),
+                ],
+              ),
+              const SizedBox(height: 27),
+              const _ProfileTitle(
+                title: 'Kazandığım saçma şeyler',
+                subtitle: 'CV’ye yazılmaz ama burada gururla sergilenir.',
+              ),
+              const SizedBox(height: 12),
+              const Wrap(
+                spacing: 9,
+                runSpacing: 9,
+                children: [
+                  _Badge(emoji: '🫂', text: 'Buz Kırıcı'),
+                  _Badge(emoji: '🌙', text: 'Gece Kuşu'),
+                  _Badge(emoji: '💦', text: '100 Damla'),
+                  _Badge(emoji: '🍝', text: 'Makarna Bilgesi'),
+                ],
+              ),
+              const SizedBox(height: 28),
+              Container(
+                padding: const EdgeInsets.all(17),
+                decoration: BoxDecoration(
+                  color: yellow,
+                  border: Border.all(color: ink, width: 3),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: const Row(
+                  children: [
+                    Text('💬', style: TextStyle(fontSize: 32)),
+                    SizedBox(width: 13),
+                    Expanded(
+                      child: Text(
+                        'Bana “Bir penguen bara girerse ne ister?” diye sor. Cevabım hazır değil ama paniğim hazır.',
+                        style: TextStyle(fontWeight: FontWeight.w900, height: 1.25),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ),
-        SizedBox(height: 12),
-        Text(
-          'Samet',
-          style: TextStyle(fontSize: 25, fontWeight: FontWeight.w900),
-        ),
-        Text('@alisametsunguc · İstanbul'),
-        SizedBox(height: 20),
-        Text(
-          '248 Damla  ·  15 Sızıntı  ·  42 Galibiyet',
-          style: TextStyle(fontWeight: FontWeight.w800),
         ),
       ],
     ),
+  );
+}
+
+class _ProfileStat extends StatelessWidget {
+  final String value, label;
+  const _ProfileStat({required this.value, required this.label});
+  @override
+  Widget build(BuildContext context) => Expanded(
+    child: Column(
+      children: [
+        Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+        Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+      ],
+    ),
+  );
+}
+
+class _ProfileTitle extends StatelessWidget {
+  final String title, subtitle;
+  const _ProfileTitle({required this.title, required this.subtitle});
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(title, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w900)),
+      Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.black54)),
+    ],
+  );
+}
+
+class _TraitCard extends StatelessWidget {
+  final String emoji, title, text;
+  const _TraitCard({required this.emoji, required this.title, required this.text});
+  @override
+  Widget build(BuildContext context) => Container(
+    constraints: const BoxConstraints(minHeight: 130),
+    padding: const EdgeInsets.all(13),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      border: Border.all(color: ink, width: 2),
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(emoji, style: const TextStyle(fontSize: 27)),
+        const SizedBox(height: 5),
+        Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
+        const SizedBox(height: 3),
+        Text(text, style: const TextStyle(fontSize: 12, height: 1.25)),
+      ],
+    ),
+  );
+}
+
+class _Badge extends StatelessWidget {
+  final String emoji, text;
+  const _Badge({required this.emoji, required this.text});
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      border: Border.all(color: ink, width: 2),
+      borderRadius: BorderRadius.circular(30),
+    ),
+    child: Text('$emoji  $text', style: const TextStyle(fontWeight: FontWeight.w800)),
   );
 }
