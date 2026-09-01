@@ -63,6 +63,7 @@ class GamesPage extends StatelessWidget {
         const Positioned.fill(
           child: CustomPaint(painter: _GamesBackdropPainter()),
         ),
+        // dart format off
         Column(
           children: [
         const Padding(
@@ -182,6 +183,7 @@ class GamesPage extends StatelessWidget {
         ),
           ],
         ),
+        // dart format on
       ],
     ),
   );
@@ -226,10 +228,18 @@ class _GamesBackdropPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
     for (final radius in [24.0, 42.0, 61.0]) {
-      canvas.drawCircle(Offset(size.width * .88, size.height * .17), radius, ring);
+      canvas.drawCircle(
+        Offset(size.width * .88, size.height * .17),
+        radius,
+        ring,
+      );
     }
     for (final radius in [19.0, 35.0, 52.0]) {
-      canvas.drawCircle(Offset(size.width * .13, size.height * .8), radius, ring);
+      canvas.drawCircle(
+        Offset(size.width * .13, size.height * .8),
+        radius,
+        ring,
+      );
     }
 
     final crease = Paint()
