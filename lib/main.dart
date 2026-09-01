@@ -613,7 +613,8 @@ class _CommentsSheetState extends State<_CommentsSheet> {
           ),
         ],
       ),
-    );
+    ),
+  );
 }
 
 class InboxPage extends StatelessWidget {
