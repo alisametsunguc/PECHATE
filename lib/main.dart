@@ -1030,9 +1030,15 @@ class _ProfilePageState extends State<ProfilePage> {
       '${name.split(' ').first}, bugün keyfini bir film adıyla anlatsan hangisi olurdu?',
     ];
     if (mood == 'Sosyal pil %3') {
-      options.insert(0, 'Konuşmak zorunda değiliz; bana sadece bugünün emojisini at 🪫');
+      options.insert(
+        0,
+        'Konuşmak zorunda değiliz; bana sadece bugünün emojisini at 🪫',
+      );
     } else if (mood == 'Kahveyle konuşurum') {
-      options.insert(0, 'İlk sorum ciddi: kahve mi seni seçti, sen mi kahveyi?');
+      options.insert(
+        0,
+        'İlk sorum ciddi: kahve mi seni seçti, sen mi kahveyi?',
+      );
     } else if (mood == 'Gülmeye geldim') {
       options.insert(0, 'Seni güldürmek için bir deneme hakkım var mı? 🤡');
     }
@@ -1053,7 +1059,11 @@ class _ProfilePageState extends State<ProfilePage> {
       SnackBar(
         backgroundColor: ink,
         content: Text('$name’e gönderildi: “$message”'),
-        action: SnackBarAction(label: 'GERİ AL', textColor: yellow, onPressed: () {}),
+        action: SnackBarAction(
+          label: 'GERİ AL',
+          textColor: yellow,
+          onPressed: () {},
+        ),
       ),
     );
   }
@@ -1558,7 +1568,9 @@ class _ProfilePageState extends State<ProfilePage> {
                           margin: const EdgeInsets.only(bottom: 8),
                           padding: const EdgeInsets.all(11),
                           decoration: BoxDecoration(
-                            color: selectedMessage == index ? paper : Colors.white54,
+                            color: selectedMessage == index
+                                ? paper
+                                : Colors.white54,
                             border: Border.all(
                               color: ink,
                               width: selectedMessage == index ? 3 : 1.5,
