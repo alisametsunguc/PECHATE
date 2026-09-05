@@ -66,6 +66,15 @@ class GamesPage extends StatelessWidget {
         // dart format off
         Column(
           children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(15, 14, 15, 0),
+          child: _MatchButton(
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const MatchmakingPage()),
+            ),
+          ),
+        ),
         Expanded(
           child: GridView.builder(
             padding: const EdgeInsets.fromLTRB(15, 18, 15, 15),
@@ -142,6 +151,358 @@ class GamesPage extends StatelessWidget {
         ),
         // dart format on
       ],
+    ),
+  );
+}
+
+class _MatchButton extends StatelessWidget {
+  final VoidCallback onTap;
+  const _MatchButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: Colors.transparent,
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(22),
+      child: Ink(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: _yellow,
+          border: Border.all(color: _ink, width: 3),
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: const [BoxShadow(color: _ink, offset: Offset(4, 5))],
+        ),
+        child: const Row(
+          children: [
+            CircleAvatar(
+              radius: 24,
+              backgroundColor: _water,
+              child: Icon(Icons.group_add_rounded, color: _ink, size: 27),
+            ),
+            SizedBox(width: 13),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'OYUN ARKADAŞI BUL',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  Text(
+                    'Eşleş, 3 oyun oyna, sonra tanışmaya karar ver.',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_rounded, color: _ink),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class MatchmakingPage extends StatefulWidget {
+  const MatchmakingPage({super.key});
+
+  @override
+  State<MatchmakingPage> createState() => _MatchmakingPageState();
+}
+
+class _MatchmakingPageState extends State<MatchmakingPage> {
+  bool searching = true;
+  bool playing = false;
+  int round = 1;
+  String? connectionResult;
+  Timer? searchTimer;
+
+  final matchedName = ['Deniz', 'Ece', 'Mina', 'Bora'][Random().nextInt(4)];
+
+  @override
+  void initState() {
+    super.initState();
+    searchTimer = Timer(const Duration(milliseconds: 1900), () {
+      if (mounted) setState(() => searching = false);
+    });
+  }
+
+  @override
+  void dispose() {
+    searchTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> playRound() async {
+    if (playing) return;
+    setState(() => playing = true);
+    final game = games[(round - 1) % games.length];
+    final completed = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PartyGame(
+          game: game,
+          matchedRound: round,
+        ),
+      ),
+    );
+    if (!mounted) return;
+    setState(() => playing = false);
+    if (completed != true) return;
+    if (round == 3) {
+      await askConnectionChoices();
+      if (!mounted) return;
+    }
+    setState(() => round++);
+  }
+
+  Future<void> askConnectionChoices() async {
+    final result = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _ConnectionChoiceSheet(name: matchedName),
+    );
+    if (result != null && mounted) setState(() => connectionResult = result);
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    backgroundColor: _paper,
+    appBar: AppBar(
+      backgroundColor: _paper,
+      title: const Text(
+        'Oyun Arkadaşı Bul',
+        style: TextStyle(fontWeight: FontWeight.w900),
+      ),
+    ),
+    body: Stack(
+      children: [
+        const Positioned.fill(
+          child: CustomPaint(painter: _GamesBackdropPainter()),
+        ),
+        Center(
+          child: Padding(
+            padding: const EdgeInsets.all(22),
+            child: searching ? _searchingCard() : _matchedCard(),
+          ),
+        ),
+      ],
+    ),
+  );
+
+  Widget _searchingCard() => Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      const SizedBox(
+        width: 86,
+        height: 86,
+        child: CircularProgressIndicator(
+          color: _water,
+          backgroundColor: _yellow,
+          strokeWidth: 10,
+        ),
+      ),
+      const SizedBox(height: 22),
+      const Text(
+        'Birileri suya bakıyor...',
+        style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+      ),
+      const Text('Sana uygun bir oyun arkadaşı aranıyor.'),
+    ],
+  );
+
+  Widget _matchedCard() => Container(
+    width: 390,
+    padding: const EdgeInsets.all(22),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      border: Border.all(color: _ink, width: 3),
+      borderRadius: BorderRadius.circular(27),
+      boxShadow: const [BoxShadow(color: _ink, offset: Offset(6, 7))],
+    ),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Text('💦', style: TextStyle(fontSize: 45)),
+        const Text(
+          'EŞLEŞME BULUNDU',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 2.2,
+          ),
+        ),
+        const SizedBox(height: 10),
+        CircleAvatar(
+          radius: 39,
+          backgroundColor: _water,
+          child: Text(
+            matchedName.characters.first,
+            style: const TextStyle(fontSize: 31, fontWeight: FontWeight.w900),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          matchedName,
+          style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w900),
+        ),
+        const Text('Ortak enerji: kötü espri + gece kahvesi'),
+        const SizedBox(height: 19),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(
+            4,
+            (i) => Container(
+              width: 43,
+              height: 8,
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              decoration: BoxDecoration(
+                color: i < round ? _water : Colors.black12,
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          round <= 4 ? '$round. OYUN' : 'OTURUM TAMAMLANDI',
+          style: const TextStyle(fontWeight: FontWeight.w900),
+        ),
+        if (connectionResult != null) ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(11),
+            decoration: BoxDecoration(
+              color: _yellow.withValues(alpha: .25),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              connectionResult!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+          ),
+        ],
+        const SizedBox(height: 19),
+        if (round <= 4)
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: playing ? null : playRound,
+              style: FilledButton.styleFrom(
+                backgroundColor: _ink,
+                foregroundColor: _paper,
+                padding: const EdgeInsets.all(15),
+              ),
+              icon: const Icon(Icons.sports_esports_rounded),
+              label: Text('$round. OYUNU BAŞLAT'),
+            ),
+          ),
+      ],
+    ),
+  );
+}
+
+class _ConnectionChoiceSheet extends StatefulWidget {
+  final String name;
+  const _ConnectionChoiceSheet({required this.name});
+
+  @override
+  State<_ConnectionChoiceSheet> createState() =>
+      _ConnectionChoiceSheetState();
+}
+
+class _ConnectionChoiceSheetState extends State<_ConnectionChoiceSheet> {
+  int person = 0;
+  String? firstChoice;
+
+  void choose(String choice) {
+    if (person == 0) {
+      setState(() {
+        firstChoice = choice;
+        person = 1;
+      });
+      return;
+    }
+    final bothWantContact = firstChoice != 'Henüz değil' && choice != 'Henüz değil';
+    final result = bothWantContact
+        ? firstChoice == choice
+              ? 'İkiniz de $choice istedi. 4. oyundan sonra bağlantı açılacak!'
+              : 'İkiniz de tanışmak istiyor. Chat ve sesli sohbet seçenekleri açıldı!'
+        : 'Tercihler şimdilik eşleşmedi. Sorun yok; 4. oyuna devam.';
+    Navigator.pop(context, result);
+  }
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.fromLTRB(22, 12, 22, 28),
+    decoration: const BoxDecoration(
+      color: _paper,
+      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      border: Border(top: BorderSide(color: _ink, width: 3)),
+    ),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 52,
+          height: 5,
+          decoration: BoxDecoration(
+            color: _ink,
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+        const SizedBox(height: 18),
+        Text(
+          person == 0 ? 'SIRA SENDE' : 'SIRA ${widget.name.toUpperCase()}’DE',
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 2,
+          ),
+        ),
+        const SizedBox(height: 5),
+        const Text(
+          '3 oyun bitti. Tanışmaya devam edelim mi?',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          person == 0
+              ? 'Cevabın karşı taraf seçimini yapana kadar gizli kalır.'
+              : '${widget.name} kendi tercihini yapıyor.',
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: Colors.black54),
+        ),
+        const SizedBox(height: 20),
+        _choiceButton('🎤', 'Sesli sohbet'),
+        const SizedBox(height: 9),
+        _choiceButton('💬', 'Yazılı chat'),
+        const SizedBox(height: 9),
+        _choiceButton('🌫️', 'Henüz değil'),
+      ],
+    ),
+  );
+
+  Widget _choiceButton(String emoji, String label) => SizedBox(
+    width: double.infinity,
+    child: OutlinedButton(
+      onPressed: () => choose(label),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: _ink,
+        side: const BorderSide(color: _ink, width: 2),
+        padding: const EdgeInsets.all(14),
+      ),
+      child: Text(
+        '$emoji  $label',
+        style: const TextStyle(fontWeight: FontWeight.w900),
+      ),
     ),
   );
 }
@@ -718,7 +1079,8 @@ class _QuickGameState extends State<QuickGame> {
 
 class PartyGame extends StatefulWidget {
   final GameInfo game;
-  const PartyGame({super.key, required this.game});
+  final int? matchedRound;
+  const PartyGame({super.key, required this.game, this.matchedRound});
   @override
   State<PartyGame> createState() => _PartyGameState();
 }
@@ -859,6 +1221,15 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
   double balance = 0, ballX = .5, ballY = .5, dx = .012, dy = .009;
   Timer? timer;
   final rng = Random();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.matchedRound != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => start(2));
+    }
+  }
+
   @override
   void dispose() {
     timer?.cancel();
@@ -1175,9 +1546,15 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              start(players);
+              if (widget.matchedRound != null) {
+                Navigator.pop(context, true);
+              } else {
+                start(players);
+              }
             },
-            child: const Text('TEKRAR OYNA'),
+            child: Text(
+              widget.matchedRound != null ? 'SONRAKİ RAUNT' : 'TEKRAR OYNA',
+            ),
           ),
         ],
       ),
