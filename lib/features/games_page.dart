@@ -1189,23 +1189,24 @@ class _StickFighterPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final line = Paint()
       ..color = _ink
-      ..strokeWidth = 3.2
+      ..strokeWidth = 3.4
       ..strokeCap = StrokeCap.round;
     final fill = Paint()..color = color;
-    canvas.drawCircle(const Offset(24, 10), 7, fill);
+    // Üstten görünüş: kafa, omuzlar, kollar ve ileri uzanan silah.
+    canvas.drawCircle(const Offset(21, 24), 9, fill);
     canvas.drawCircle(
-      const Offset(24, 10),
-      7,
+      const Offset(21, 24),
+      9,
       line..style = PaintingStyle.stroke,
     );
     line.style = PaintingStyle.stroke;
-    canvas.drawLine(const Offset(24, 17), const Offset(24, 33), line);
-    canvas.drawLine(const Offset(24, 21), const Offset(38, 21), line);
-    canvas.drawLine(const Offset(38, 21), const Offset(44, 21), line);
-    canvas.drawLine(const Offset(24, 22), const Offset(15, 28), line);
-    canvas.drawLine(const Offset(24, 33), const Offset(15, 44), line);
-    canvas.drawLine(const Offset(24, 33), const Offset(33, 44), line);
-    canvas.drawCircle(const Offset(44, 21), 2.5, fill);
+    canvas.drawLine(const Offset(14, 13), const Offset(14, 35), line);
+    canvas.drawLine(const Offset(14, 13), const Offset(28, 18), line);
+    canvas.drawLine(const Offset(14, 35), const Offset(28, 30), line);
+    canvas.drawLine(const Offset(27, 18), const Offset(35, 24), line);
+    canvas.drawLine(const Offset(27, 30), const Offset(35, 24), line);
+    canvas.drawLine(const Offset(33, 24), const Offset(47, 24), line);
+    canvas.drawCircle(const Offset(45, 24), 2.8, fill);
   }
 
   @override
@@ -1317,6 +1318,12 @@ class _PlayerJoystickState extends State<_PlayerJoystick> {
 }
 
 class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
+  static const duelObstacles = <Rect>[
+    Rect.fromLTWH(.28, .16, .13, .24),
+    Rect.fromLTWH(.59, .60, .13, .24),
+    Rect.fromLTWH(.44, .39, .12, .22),
+    Rect.fromLTWH(.10, .73, .15, .10),
+  ];
   int players = 0;
   List<int> score = [];
   List<double> progress = [];
@@ -1421,15 +1428,18 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
         if (lives[i] == 0) continue;
         if (!duelHeld[i]) {
           tankAngles[i] = (tankAngles[i] + .045) % (pi * 2);
-        } else if (now - duelPressedAt[i] >= 190) {
-          tankPositions[i] = Offset(
-            (tankPositions[i].dx + cos(tankAngles[i]) * .006)
+        } else if (now - duelPressedAt[i] >= 140) {
+          final nextPosition = Offset(
+            (tankPositions[i].dx + cos(tankAngles[i]) * .012)
                 .clamp(.06, .94)
                 .toDouble(),
-            (tankPositions[i].dy + sin(tankAngles[i]) * .006)
+            (tankPositions[i].dy + sin(tankAngles[i]) * .012)
                 .clamp(.06, .94)
                 .toDouble(),
           );
+          if (!_hitsDuelObstacle(nextPosition, margin: .055)) {
+            tankPositions[i] = nextPosition;
+          }
         }
       }
       final removed = <_ArenaBullet>[];
@@ -1437,6 +1447,10 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
         bullet.x += bullet.dx;
         bullet.y += bullet.dy;
         if (bullet.x < 0 || bullet.x > 1 || bullet.y < 0 || bullet.y > 1) {
+          removed.add(bullet);
+          continue;
+        }
+        if (_hitsDuelObstacle(Offset(bullet.x, bullet.y))) {
           removed.add(bullet);
           continue;
         }
@@ -1466,6 +1480,16 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
     });
   }
 
+  bool _hitsDuelObstacle(Offset point, {double margin = 0}) =>
+      duelObstacles.any(
+        (obstacle) => Rect.fromLTRB(
+          obstacle.left - margin,
+          obstacle.top - margin,
+          obstacle.right + margin,
+          obstacle.bottom + margin,
+        ).contains(point),
+      );
+
   void _duelButtonDown(int player) {
     if (finished || lives[player] == 0) return;
     setState(() {
@@ -1479,7 +1503,11 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
     final heldFor =
         DateTime.now().millisecondsSinceEpoch - duelPressedAt[player];
     duelHeld[player] = false;
-    if (heldFor < 190) press(player);
+    if (heldFor < 190) {
+      press(player);
+      tankAngles[player] =
+          (tankAngles[player] + pi / 2 + rng.nextDouble() * pi / 2) % (pi * 2);
+    }
     if (mounted) setState(() {});
   }
 
@@ -1843,6 +1871,27 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
     'shoot' => LayoutBuilder(
       builder: (_, bounds) => Stack(
         children: [
+          ...duelObstacles.map(
+            (obstacle) => Positioned(
+              left: obstacle.left * bounds.maxWidth,
+              top: obstacle.top * bounds.maxHeight,
+              width: obstacle.width * bounds.maxWidth,
+              height: obstacle.height * bounds.maxHeight,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xffd6c7ac),
+                  border: Border.all(color: _ink, width: 3),
+                  borderRadius: BorderRadius.circular(9),
+                  boxShadow: const [
+                    BoxShadow(color: Colors.black26, offset: Offset(3, 4)),
+                  ],
+                ),
+                child: const Center(
+                  child: Icon(Icons.inventory_2_rounded, color: _ink, size: 20),
+                ),
+              ),
+            ),
+          ),
           ...List.generate(
             players,
             (i) => Positioned(
@@ -2095,7 +2144,8 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
     _ => 'KAP!',
   };
   String _hint() => switch (widget.game.id) {
-    'shoot' => 'Dönerken dokun-bırak: ateş. Basılı tut: baktığın yöne ilerle.',
+    'shoot' =>
+      'Dokun-bırak: ateş ve yön değiştir. Basılı tut: baktığın yöne ilerle.',
     'race' => 'Joystick’i ileri iterek bitiş çizgisine ilk sen ulaş.',
     'catch' => 'Yıldız görününce ilk sen yakala.',
     'sumo' => 'Rakibini çemberin dışına it.',
