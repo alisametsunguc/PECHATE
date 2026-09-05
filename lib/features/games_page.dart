@@ -1098,16 +1098,16 @@ class _ArenaBullet {
 class _DuelButton extends StatefulWidget {
   final int player;
   final Color color;
-  final VoidCallback onDown;
-  final VoidCallback onUp;
-  final VoidCallback onCancel;
+  final VoidCallback onTap;
+  final VoidCallback onHoldStart;
+  final VoidCallback onHoldEnd;
 
   const _DuelButton({
     required this.player,
     required this.color,
-    required this.onDown,
-    required this.onUp,
-    required this.onCancel,
+    required this.onTap,
+    required this.onHoldStart,
+    required this.onHoldEnd,
   });
 
   @override
@@ -1117,19 +1117,14 @@ class _DuelButton extends StatefulWidget {
 class _DuelButtonState extends State<_DuelButton> {
   bool pressed = false;
 
-  void _down(PointerDownEvent event) {
+  void _holdStart(LongPressStartDetails details) {
     setState(() => pressed = true);
-    widget.onDown();
+    widget.onHoldStart();
   }
 
-  void _up(PointerUpEvent event) {
+  void _holdEnd() {
     setState(() => pressed = false);
-    widget.onUp();
-  }
-
-  void _cancel(PointerCancelEvent event) {
-    setState(() => pressed = false);
-    widget.onCancel();
+    widget.onHoldEnd();
   }
 
   @override
@@ -1141,10 +1136,12 @@ class _DuelButtonState extends State<_DuelButton> {
         style: const TextStyle(fontWeight: FontWeight.w900),
       ),
       const SizedBox(height: 4),
-      Listener(
-        onPointerDown: _down,
-        onPointerUp: _up,
-        onPointerCancel: _cancel,
+      GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.onTap,
+        onLongPressStart: _holdStart,
+        onLongPressEnd: (_) => _holdEnd(),
+        onLongPressCancel: _holdEnd,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 90),
           width: 82,
@@ -1507,24 +1504,19 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
         ).contains(point),
       );
 
-  void _duelButtonDown(int player) {
+  void _duelTap(int player) {
+    if (finished || lives[player] == 0) return;
+    _shootDuelBullet(player);
+    duelTurnDirections[player] *= -1;
+  }
+
+  void _duelHoldStart(int player) {
     if (finished || lives[player] == 0) return;
     duelHeld[player] = true;
-    duelPressedAt[player] = DateTime.now().millisecondsSinceEpoch;
+    duelPressedAt[player] = DateTime.now().millisecondsSinceEpoch - 170;
   }
 
-  void _duelButtonUp(int player) {
-    if (finished || player >= duelHeld.length || !duelHeld[player]) return;
-    final heldFor =
-        DateTime.now().millisecondsSinceEpoch - duelPressedAt[player];
-    duelHeld[player] = false;
-    if (heldFor < 170) {
-      _shootDuelBullet(player);
-      duelTurnDirections[player] *= -1;
-    }
-  }
-
-  void _duelButtonCancel(int player) {
+  void _duelHoldEnd(int player) {
     if (player >= duelHeld.length) return;
     duelHeld[player] = false;
   }
@@ -1875,9 +1867,9 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
                 return _DuelButton(
                   player: i,
                   color: color,
-                  onDown: () => _duelButtonDown(i),
-                  onUp: () => _duelButtonUp(i),
-                  onCancel: () => _duelButtonCancel(i),
+                  onTap: () => _duelTap(i),
+                  onHoldStart: () => _duelHoldStart(i),
+                  onHoldEnd: () => _duelHoldEnd(i),
                 );
               }
               return _PlayerJoystick(
