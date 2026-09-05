@@ -1336,6 +1336,7 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
   List<int> lastMoveAt = [];
   List<bool> duelHeld = [];
   List<int> duelPressedAt = [];
+  List<double> duelTurnDirections = [];
   int target = -1, memoryStep = 0;
   List<int> sequence = [];
   bool go = false, finished = false;
@@ -1372,6 +1373,7 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
       lastMoveAt = List.filled(players, 0);
       duelHeld = List.filled(players, false);
       duelPressedAt = List.filled(players, 0);
+      duelTurnDirections = List.filled(players, 1);
       target = -1;
       memoryStep = 0;
       sequence = [];
@@ -1427,7 +1429,8 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
       for (var i = 0; i < players; i++) {
         if (lives[i] == 0) continue;
         if (!duelHeld[i]) {
-          tankAngles[i] = (tankAngles[i] + .045) % (pi * 2);
+          tankAngles[i] =
+              (tankAngles[i] + .045 * duelTurnDirections[i]) % (pi * 2);
         } else if (now - duelPressedAt[i] >= 140) {
           final nextPosition = Offset(
             (tankPositions[i].dx + cos(tankAngles[i]) * .012)
@@ -1492,10 +1495,8 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
 
   void _duelButtonDown(int player) {
     if (finished || lives[player] == 0) return;
-    setState(() {
-      duelHeld[player] = true;
-      duelPressedAt[player] = DateTime.now().millisecondsSinceEpoch;
-    });
+    duelHeld[player] = true;
+    duelPressedAt[player] = DateTime.now().millisecondsSinceEpoch;
   }
 
   void _duelButtonUp(int player) {
@@ -1505,15 +1506,13 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
     duelHeld[player] = false;
     if (heldFor < 190) {
       press(player);
-      tankAngles[player] =
-          (tankAngles[player] + pi / 2 + rng.nextDouble() * pi / 2) % (pi * 2);
+      duelTurnDirections[player] *= -1;
     }
-    if (mounted) setState(() {});
   }
 
   void _duelButtonCancel(int player) {
     if (player >= duelHeld.length) return;
-    setState(() => duelHeld[player] = false);
+    duelHeld[player] = false;
   }
 
   void _spawnTarget() {
@@ -2145,7 +2144,7 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
   };
   String _hint() => switch (widget.game.id) {
     'shoot' =>
-      'Dokun-bırak: ateş ve yön değiştir. Basılı tut: baktığın yöne ilerle.',
+      'Dokun-bırak: ateş ve tersine dön. Basılı tut: baktığın yöne ilerle.',
     'race' => 'Joystick’i ileri iterek bitiş çizgisine ilk sen ulaş.',
     'catch' => 'Yıldız görününce ilk sen yakala.',
     'sumo' => 'Rakibini çemberin dışına it.',
