@@ -417,7 +417,7 @@ class _PostCardState extends State<PostCard> {
 class _FeedComment {
   final String name, text, emoji;
   int likes;
-  bool liked;
+  bool liked = false;
   final List<_FeedReply> replies;
 
   _FeedComment(
@@ -425,17 +425,16 @@ class _FeedComment {
     this.text,
     this.emoji, {
     this.likes = 0,
-    this.liked = false,
     List<_FeedReply>? replies,
   }) : replies = replies ?? [];
 }
 
 class _FeedReply {
   final String name, text;
-  int likes;
-  bool liked;
+  int likes = 0;
+  bool liked = false;
 
-  _FeedReply(this.name, this.text, {this.likes = 0, this.liked = false});
+  _FeedReply(this.name, this.text);
 }
 
 class _CommentsSheet extends StatefulWidget {
