@@ -1220,6 +1220,16 @@ class _RaceMapPainter extends CustomPainter {
       Offset.zero & size,
       Paint()..color = const Color(0xffbfe39b),
     );
+    final grass = Paint()
+      ..color = const Color(0xff93cd72).withValues(alpha: .35);
+    const tile = 34.0;
+    for (double y = 0; y < size.height; y += tile) {
+      for (double x = 0; x < size.width; x += tile) {
+        if (((x / tile).floor() + (y / tile).floor()).isEven) {
+          canvas.drawRect(Rect.fromLTWH(x, y, tile, tile), grass);
+        }
+      }
+    }
     final road = RRect.fromRectAndRadius(
       Rect.fromLTWH(
         size.width * .11,
@@ -1229,12 +1239,20 @@ class _RaceMapPainter extends CustomPainter {
       ),
       Radius.circular(size.shortestSide * .18),
     );
+    final roadWidth = size.shortestSide * .23;
     canvas.drawRRect(
       road,
       Paint()
-        ..color = const Color(0xff696a66)
+        ..color = const Color(0xfff3eee4)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = size.shortestSide * .23,
+        ..strokeWidth = roadWidth + 10,
+    );
+    canvas.drawRRect(
+      road,
+      Paint()
+        ..color = const Color(0xff5f625f)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = roadWidth,
     );
     canvas.drawRRect(
       road,
@@ -1243,15 +1261,92 @@ class _RaceMapPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2,
     );
+    final metric = (Path()..addRRect(road)).computeMetrics().first;
     final centerLine = Paint()
-      ..color = _yellow
+      ..color = const Color(0xffffdc57)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3;
-    canvas.drawRRect(road, centerLine);
+      ..strokeWidth = 3
+      ..strokeCap = StrokeCap.round;
+    for (double d = 0; d < metric.length; d += 22) {
+      canvas.drawPath(
+        metric.extractPath(d, min(d + 11, metric.length)),
+        centerLine,
+      );
+    }
+
+    final finishX = size.width * .17;
+    final finishY = size.height * .12;
+    const square = 7.0;
+    for (var row = 0; row < 6; row++) {
+      for (var column = 0; column < 2; column++) {
+        canvas.drawRect(
+          Rect.fromLTWH(
+            finishX + column * square,
+            finishY + row * square,
+            square,
+            square,
+          ),
+          Paint()..color = (row + column).isEven ? _ink : Colors.white,
+        );
+      }
+    }
   }
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+class _RaceCar extends StatelessWidget {
+  final Color color;
+  const _RaceCar({required this.color});
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: 34,
+    height: 48,
+    child: CustomPaint(painter: _RaceCarPainter(color)),
+  );
+}
+
+class _RaceCarPainter extends CustomPainter {
+  final Color color;
+  const _RaceCarPainter(this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final outline = Paint()..color = _ink;
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(5, 2, size.width - 10, size.height - 4),
+        const Radius.circular(8),
+      ),
+      outline,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(8, 5, size.width - 16, size.height - 10),
+        const Radius.circular(6),
+      ),
+      Paint()..color = color,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(10, 12, size.width - 20, 12),
+        const Radius.circular(3),
+      ),
+      Paint()..color = const Color(0xffbcebf1),
+    );
+    canvas.drawRect(Rect.fromLTWH(1, 9, 5, 10), outline);
+    canvas.drawRect(Rect.fromLTWH(size.width - 6, 9, 5, 10), outline);
+    canvas.drawRect(Rect.fromLTWH(1, 30, 5, 10), outline);
+    canvas.drawRect(Rect.fromLTWH(size.width - 6, 30, 5, 10), outline);
+    canvas.drawCircle(const Offset(11, 7), 2, Paint()..color = _yellow);
+    canvas.drawCircle(Offset(size.width - 11, 7), 2, Paint()..color = _yellow);
+  }
+
+  @override
+  bool shouldRepaint(covariant _RaceCarPainter oldDelegate) =>
+      oldDelegate.color != color;
 }
 
 class _PlayerJoystick extends StatefulWidget {
@@ -1329,6 +1424,7 @@ class _PlayerJoystickState extends State<_PlayerJoystick> {
             style: const TextStyle(fontWeight: FontWeight.w900),
           ),
           GestureDetector(
+            onPanDown: (d) => move(d.localPosition),
             onPanStart: (d) => move(d.localPosition),
             onPanUpdate: (d) => move(d.localPosition),
             onPanEnd: (_) => stop(),
@@ -1775,7 +1871,7 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
   void movePlayer(int i, Offset direction) {
     if (finished || i >= players) return;
     final now = DateTime.now().millisecondsSinceEpoch;
-    if (now - lastMoveAt[i] < 45) return;
+    if (widget.game.id != 'race' && now - lastMoveAt[i] < 45) return;
     lastMoveAt[i] = now;
     switch (widget.game.id) {
       case 'shoot':
@@ -1793,10 +1889,10 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
       case 'race':
         tankAngles[i] = direction.direction;
         tankPositions[i] = Offset(
-          (tankPositions[i].dx + direction.dx * .028)
+          (tankPositions[i].dx + direction.dx * .018)
               .clamp(.055, .945)
               .toDouble(),
-          (tankPositions[i].dy + direction.dy * .028)
+          (tankPositions[i].dy + direction.dy * .018)
               .clamp(.07, .93)
               .toDouble(),
         );
@@ -2084,10 +2180,11 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
               left: tankPositions[i].dx * bounds.maxWidth - 19,
               top: tankPositions[i].dy * bounds.maxHeight - 25,
               child: Transform.rotate(
-                angle: tankAngles[i] + pi / 2,
-                child: Text(
-                  i == 0 ? '🏎️' : '🚙',
-                  style: const TextStyle(fontSize: 34),
+                angle: tankAngles[i] - pi / 2,
+                child: _RaceCar(
+                  color: i == 0
+                      ? const Color(0xffff5d59)
+                      : const Color(0xff48c9dc),
                 ),
               ),
             ),
