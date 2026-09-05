@@ -187,10 +187,7 @@ class _MatchButton extends StatelessWidget {
                 children: [
                   Text(
                     'OYUN ARKADAŞI BUL',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
                   ),
                   Text(
                     'Eşleş, 3 oyun oyna, sonra tanışmaya karar ver.',
@@ -244,10 +241,7 @@ class _MatchmakingPageState extends State<MatchmakingPage> {
     final completed = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
-        builder: (_) => PartyGame(
-          game: game,
-          matchedRound: round,
-        ),
+        builder: (_) => PartyGame(game: game, matchedRound: round),
       ),
     );
     if (!mounted) return;
@@ -413,8 +407,7 @@ class _ConnectionChoiceSheet extends StatefulWidget {
   const _ConnectionChoiceSheet({required this.name});
 
   @override
-  State<_ConnectionChoiceSheet> createState() =>
-      _ConnectionChoiceSheetState();
+  State<_ConnectionChoiceSheet> createState() => _ConnectionChoiceSheetState();
 }
 
 class _ConnectionChoiceSheetState extends State<_ConnectionChoiceSheet> {
@@ -429,7 +422,8 @@ class _ConnectionChoiceSheetState extends State<_ConnectionChoiceSheet> {
       });
       return;
     }
-    final bothWantContact = firstChoice != 'Henüz değil' && choice != 'Henüz değil';
+    final bothWantContact =
+        firstChoice != 'Henüz değil' && choice != 'Henüz değil';
     final result = bothWantContact
         ? firstChoice == choice
               ? 'İkiniz de $choice istedi. 4. oyundan sonra bağlantı açılacak!'
