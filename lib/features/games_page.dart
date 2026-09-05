@@ -1095,6 +1095,124 @@ class _ArenaBullet {
   });
 }
 
+class _DuelButton extends StatefulWidget {
+  final int player;
+  final Color color;
+  final VoidCallback onDown;
+  final VoidCallback onUp;
+  final VoidCallback onCancel;
+
+  const _DuelButton({
+    required this.player,
+    required this.color,
+    required this.onDown,
+    required this.onUp,
+    required this.onCancel,
+  });
+
+  @override
+  State<_DuelButton> createState() => _DuelButtonState();
+}
+
+class _DuelButtonState extends State<_DuelButton> {
+  bool pressed = false;
+
+  void _down(PointerDownEvent event) {
+    setState(() => pressed = true);
+    widget.onDown();
+  }
+
+  void _up(PointerUpEvent event) {
+    setState(() => pressed = false);
+    widget.onUp();
+  }
+
+  void _cancel(PointerCancelEvent event) {
+    setState(() => pressed = false);
+    widget.onCancel();
+  }
+
+  @override
+  Widget build(BuildContext context) => Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Text(
+        'P${widget.player + 1}',
+        style: const TextStyle(fontWeight: FontWeight.w900),
+      ),
+      const SizedBox(height: 4),
+      Listener(
+        onPointerDown: _down,
+        onPointerUp: _up,
+        onPointerCancel: _cancel,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 90),
+          width: 82,
+          height: 82,
+          transform: Matrix4.translationValues(0, pressed ? 4 : 0, 0),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: pressed ? widget.color.withValues(alpha: .72) : widget.color,
+            shape: BoxShape.circle,
+            border: Border.all(color: _ink, width: 4),
+            boxShadow: pressed
+                ? const []
+                : const [BoxShadow(color: _ink, offset: Offset(0, 5))],
+          ),
+          child: Text(
+            pressed ? 'İLERLE' : 'DOKUN',
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900),
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
+class _StickFighter extends StatelessWidget {
+  final Color color;
+  const _StickFighter({required this.color});
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: 48,
+    height: 48,
+    child: CustomPaint(painter: _StickFighterPainter(color)),
+  );
+}
+
+class _StickFighterPainter extends CustomPainter {
+  final Color color;
+  const _StickFighterPainter(this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final line = Paint()
+      ..color = _ink
+      ..strokeWidth = 3.2
+      ..strokeCap = StrokeCap.round;
+    final fill = Paint()..color = color;
+    canvas.drawCircle(const Offset(24, 10), 7, fill);
+    canvas.drawCircle(
+      const Offset(24, 10),
+      7,
+      line..style = PaintingStyle.stroke,
+    );
+    line.style = PaintingStyle.stroke;
+    canvas.drawLine(const Offset(24, 17), const Offset(24, 33), line);
+    canvas.drawLine(const Offset(24, 21), const Offset(38, 21), line);
+    canvas.drawLine(const Offset(38, 21), const Offset(44, 21), line);
+    canvas.drawLine(const Offset(24, 22), const Offset(15, 28), line);
+    canvas.drawLine(const Offset(24, 33), const Offset(15, 44), line);
+    canvas.drawLine(const Offset(24, 33), const Offset(33, 44), line);
+    canvas.drawCircle(const Offset(44, 21), 2.5, fill);
+  }
+
+  @override
+  bool shouldRepaint(covariant _StickFighterPainter oldDelegate) =>
+      oldDelegate.color != color;
+}
+
 class _PlayerJoystick extends StatefulWidget {
   final int player;
   final Color color;
@@ -1209,6 +1327,8 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
   List<Offset> tankPositions = [];
   List<_ArenaBullet> bullets = [];
   List<int> lastMoveAt = [];
+  List<bool> duelHeld = [];
+  List<int> duelPressedAt = [];
   int target = -1, memoryStep = 0;
   List<int> sequence = [];
   bool go = false, finished = false;
@@ -1243,6 +1363,8 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
       tankPositions = _startingPositions(players);
       bullets = [];
       lastMoveAt = List.filled(players, 0);
+      duelHeld = List.filled(players, false);
+      duelPressedAt = List.filled(players, 0);
       target = -1;
       memoryStep = 0;
       sequence = [];
@@ -1294,6 +1416,22 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
   void _startShoot() {
     timer = Timer.periodic(const Duration(milliseconds: 30), (_) {
       if (!mounted || finished) return;
+      final now = DateTime.now().millisecondsSinceEpoch;
+      for (var i = 0; i < players; i++) {
+        if (lives[i] == 0) continue;
+        if (!duelHeld[i]) {
+          tankAngles[i] = (tankAngles[i] + .045) % (pi * 2);
+        } else if (now - duelPressedAt[i] >= 190) {
+          tankPositions[i] = Offset(
+            (tankPositions[i].dx + cos(tankAngles[i]) * .006)
+                .clamp(.06, .94)
+                .toDouble(),
+            (tankPositions[i].dy + sin(tankAngles[i]) * .006)
+                .clamp(.06, .94)
+                .toDouble(),
+          );
+        }
+      }
       final removed = <_ArenaBullet>[];
       for (final bullet in bullets) {
         bullet.x += bullet.dx;
@@ -1326,6 +1464,28 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
       }
       setState(() {});
     });
+  }
+
+  void _duelButtonDown(int player) {
+    if (finished || lives[player] == 0) return;
+    setState(() {
+      duelHeld[player] = true;
+      duelPressedAt[player] = DateTime.now().millisecondsSinceEpoch;
+    });
+  }
+
+  void _duelButtonUp(int player) {
+    if (finished || player >= duelHeld.length || !duelHeld[player]) return;
+    final heldFor =
+        DateTime.now().millisecondsSinceEpoch - duelPressedAt[player];
+    duelHeld[player] = false;
+    if (heldFor < 190) press(player);
+    if (mounted) setState(() {});
+  }
+
+  void _duelButtonCancel(int player) {
+    if (player >= duelHeld.length) return;
+    setState(() => duelHeld[player] = false);
   }
 
   void _spawnTarget() {
@@ -1657,6 +1817,15 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
                 const Color(0xff8bd669),
                 const Color(0xffad8ced),
               ][i];
+              if (widget.game.id == 'shoot') {
+                return _DuelButton(
+                  player: i,
+                  color: color,
+                  onDown: () => _duelButtonDown(i),
+                  onUp: () => _duelButtonUp(i),
+                  onCancel: () => _duelButtonCancel(i),
+                );
+              }
               return _PlayerJoystick(
                 player: i,
                 color: color,
@@ -1682,21 +1851,14 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
               child: Opacity(
                 opacity: lives[i] > 0 ? 1 : .2,
                 child: Transform.rotate(
-                  angle: tankAngles[i] + pi / 2,
-                  child: Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: [
-                        const Color(0xffff6b67),
-                        _water,
-                        const Color(0xff8bd669),
-                        const Color(0xffad8ced),
-                      ][i],
-                      shape: BoxShape.circle,
-                      border: Border.all(color: _ink, width: 3),
-                    ),
-                    child: const Icon(Icons.navigation, color: _ink),
+                  angle: tankAngles[i],
+                  child: _StickFighter(
+                    color: [
+                      const Color(0xffff6b67),
+                      _water,
+                      const Color(0xff8bd669),
+                      const Color(0xffad8ced),
+                    ][i],
                   ),
                 ),
               ),
@@ -1933,7 +2095,7 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
     _ => 'KAP!',
   };
   String _hint() => switch (widget.game.id) {
-    'shoot' => 'Joystick ile hareket edip nişan al, ATEŞ ile rakibini vur.',
+    'shoot' => 'Dönerken dokun-bırak: ateş. Basılı tut: baktığın yöne ilerle.',
     'race' => 'Joystick’i ileri iterek bitiş çizgisine ilk sen ulaş.',
     'catch' => 'Yıldız görününce ilk sen yakala.',
     'sumo' => 'Rakibini çemberin dışına it.',
