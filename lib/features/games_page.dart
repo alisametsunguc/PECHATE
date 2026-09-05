@@ -1337,6 +1337,9 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
   List<bool> duelHeld = [];
   List<int> duelPressedAt = [];
   List<double> duelTurnDirections = [];
+  List<int> duelAmmo = [];
+  List<int> duelLastShotAt = [];
+  List<int> duelLastRefillAt = [];
   int target = -1, memoryStep = 0;
   List<int> sequence = [];
   bool go = false, finished = false;
@@ -1374,6 +1377,12 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
       duelHeld = List.filled(players, false);
       duelPressedAt = List.filled(players, 0);
       duelTurnDirections = List.filled(players, 1);
+      duelAmmo = List.filled(players, 6);
+      duelLastShotAt = List.filled(players, 0);
+      duelLastRefillAt = List.filled(
+        players,
+        DateTime.now().millisecondsSinceEpoch,
+      );
       target = -1;
       memoryStep = 0;
       sequence = [];
@@ -1428,10 +1437,15 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
       final now = DateTime.now().millisecondsSinceEpoch;
       for (var i = 0; i < players; i++) {
         if (lives[i] == 0) continue;
+        if (duelAmmo[i] < 6 && now - duelLastRefillAt[i] >= 500) {
+          final refilled = (now - duelLastRefillAt[i]) ~/ 500;
+          duelAmmo[i] = min(6, duelAmmo[i] + refilled);
+          duelLastRefillAt[i] += refilled * 500;
+        }
         if (!duelHeld[i]) {
           tankAngles[i] =
               (tankAngles[i] + .045 * duelTurnDirections[i]) % (pi * 2);
-        } else if (now - duelPressedAt[i] >= 140) {
+        } else if (now - duelPressedAt[i] >= 170) {
           final nextPosition = Offset(
             (tankPositions[i].dx + cos(tankAngles[i]) * .012)
                 .clamp(.06, .94)
@@ -1504,8 +1518,8 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
     final heldFor =
         DateTime.now().millisecondsSinceEpoch - duelPressedAt[player];
     duelHeld[player] = false;
-    if (heldFor < 190) {
-      press(player);
+    if (heldFor < 170) {
+      _shootDuelBullet(player);
       duelTurnDirections[player] *= -1;
     }
   }
@@ -1513,6 +1527,27 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
   void _duelButtonCancel(int player) {
     if (player >= duelHeld.length) return;
     duelHeld[player] = false;
+  }
+
+  void _shootDuelBullet(int player) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (lives[player] == 0 ||
+        duelAmmo[player] == 0 ||
+        now - duelLastShotAt[player] < 170) {
+      return;
+    }
+    duelAmmo[player]--;
+    duelLastShotAt[player] = now;
+    if (duelAmmo[player] == 5) duelLastRefillAt[player] = now;
+    bullets.add(
+      _ArenaBullet(
+        owner: player,
+        x: tankPositions[player].dx,
+        y: tankPositions[player].dy,
+        dx: cos(tankAngles[player]) * .018,
+        dy: sin(tankAngles[player]) * .018,
+      ),
+    );
   }
 
   void _spawnTarget() {
@@ -1587,16 +1622,7 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
     if (finished) return;
     switch (widget.game.id) {
       case 'shoot':
-        if (lives[i] == 0) return;
-        bullets.add(
-          _ArenaBullet(
-            owner: i,
-            x: tankPositions[i].dx,
-            y: tankPositions[i].dy,
-            dx: cos(tankAngles[i]) * .018,
-            dy: sin(tankAngles[i]) * .018,
-          ),
-        );
+        _shootDuelBullet(i);
         break;
       case 'race':
         progress[i] += .055 + rng.nextDouble() * .025;
@@ -1808,7 +1834,8 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
                   ),
                   child: Text(
                     widget.game.id == 'shoot'
-                        ? 'P${i + 1}: ${List.filled(lives[i], '♥').join()}'
+                        ? 'P${i + 1}: ${List.filled(lives[i], '♥').join()}  '
+                              '•  ${duelAmmo[i]}/6'
                         : 'P${i + 1}: ${score[i]}',
                     textAlign: TextAlign.center,
                     style: const TextStyle(fontWeight: FontWeight.w900),
@@ -2144,7 +2171,7 @@ class _PartyGameState extends State<PartyGame> with TickerProviderStateMixin {
   };
   String _hint() => switch (widget.game.id) {
     'shoot' =>
-      'Dokun-bırak: ateş ve tersine dön. Basılı tut: baktığın yöne ilerle.',
+      'Dokun-bırak: ateş ve tersine dön. Basılı tut: ilerle. Mermi: 0,5 sn.',
     'race' => 'Joystick’i ileri iterek bitiş çizgisine ilk sen ulaş.',
     'catch' => 'Yıldız görününce ilk sen yakala.',
     'sumo' => 'Rakibini çemberin dışına it.',
