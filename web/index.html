@@ -65,6 +65,13 @@
     For more details:
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
-  <script src="flutter_bootstrap.js" async></script>
+  <script>
+    // GitHub Pages may keep Flutter's fixed asset names in its edge cache.
+    // Give the bootstrap file a fresh URL on every load during development.
+    const bootstrap = document.createElement('script');
+    bootstrap.src = `flutter_bootstrap.js?v=${Date.now()}`;
+    bootstrap.async = true;
+    document.body.appendChild(bootstrap);
+  </script>
 </body>
 </html>
