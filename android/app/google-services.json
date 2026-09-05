@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "638321859619",
+    "project_id": "pechate-app-2026",
+    "storage_bucket": "pechate-app-2026.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:638321859619:android:9e1da2d72f875f9e28a596",
+        "android_client_info": {
+          "package_name": "com.pechate.pechate"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC7Ne-Tq2Py18ZzYIg2vh7h_4n4kjKI1rk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

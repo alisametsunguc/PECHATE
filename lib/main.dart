@@ -3,8 +3,10 @@ import 'dart:typed_data';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:image_picker/image_picker.dart';
 
+import 'firebase_options.dart';
 import 'features/inbox_page.dart' as inbox_feature;
 import 'features/games_page.dart' as games_feature;
 
@@ -13,7 +15,11 @@ const paper = Color(0xfffffbf1);
 const yellow = Color(0xfff2b705);
 const water = Color(0xff6bd7e5);
 
-void main() => runApp(const PechateApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  runApp(const PechateApp());
+}
 
 class PechateApp extends StatelessWidget {
   const PechateApp({super.key});
